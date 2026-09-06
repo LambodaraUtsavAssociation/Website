@@ -15,16 +15,13 @@ export const FESTIVAL_DATE_MAP: Record<number, { startDate: string; endDate: str
  * Returns the 5-day festival dates for a given year.
  */
 export function getFestivalDates(year: number) {
-  if (FESTIVAL_DATE_MAP[year]) {
-    return {
-      startDate: new Date(FESTIVAL_DATE_MAP[year].startDate),
-      endDate: new Date(FESTIVAL_DATE_MAP[year].endDate),
-    };
-  }
+  const map = FESTIVAL_DATE_MAP[year];
+  const startStr = map ? map.startDate : `${year}-09-14`;
+  const endStr = map ? map.endDate : `${year}-09-18`;
 
   return {
-    startDate: new Date(`${year}-09-14`),
-    endDate: new Date(`${year}-09-18`),
+    startDate: new Date(`${startStr}T00:00:00`),
+    endDate: new Date(`${endStr}T23:59:59`),
   };
 }
 
@@ -34,6 +31,32 @@ export function getFestivalDates(year: number) {
 export function hasFestivalStarted(year: number, currentDate = new Date()): boolean {
   const { startDate } = getFestivalDates(year);
   return currentDate >= startDate;
+}
+
+/**
+ * Checks whether the festival is currently active (within the 5-day window).
+ */
+export function isFestivalActive(year: number, currentDate = new Date()): boolean {
+  const { startDate, endDate } = getFestivalDates(year);
+  return currentDate >= startDate && currentDate <= endDate;
+}
+
+/**
+ * Checks whether the festival has completed for a given calendar year.
+ */
+export function hasFestivalEnded(year: number, currentDate = new Date()): boolean {
+  const { endDate } = getFestivalDates(year);
+  return currentDate > endDate;
+}
+
+/**
+ * Calculates current day number (Day 1 through Day 5) during festival.
+ */
+export function getCurrentFestivalDay(year: number, currentDate = new Date()): number {
+  const { startDate } = getFestivalDates(year);
+  const diffTime = currentDate.getTime() - startDate.getTime();
+  const dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  return Math.min(5, Math.max(1, dayNumber));
 }
 
 /**
