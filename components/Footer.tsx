@@ -80,44 +80,32 @@ export default function Footer({
         </div>
 
         {/* Quick Links */}
-        <div className="md:col-span-3 flex flex-col space-y-3">
-          <h4 className="text-xs font-semibold uppercase tracking-widest text-gold-400">Navigation</h4>
-          <ul className="space-y-2 text-xs uppercase tracking-wider font-medium">
-            <li>
-              <Link href="/" className="hover:text-ivory-50 transition-colors">
-                Homepage
-              </Link>
-            </li>
-            <li>
-              <Link href={yearHref} className="hover:text-ivory-50 transition-colors">
-                {yearLabel}
-              </Link>
-            </li>
-            <li>
-              <Link href="/archive" className="hover:text-ivory-50 transition-colors">
-                Past Years Archive
-              </Link>
-            </li>
-            <li>
-              <Link href="/about" className="hover:text-ivory-50 transition-colors">
-                About Our Digital Gallery
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Admin Portal & Management */}
-        <div className="md:col-span-3 flex flex-col space-y-3">
-          <h4 className="text-xs font-semibold uppercase tracking-widest text-gold-400">Administration</h4>
-          <p className="text-xs text-ivory-400 leading-relaxed">
-            Content managed exclusively by our authorized village celebration administrator.
-          </p>
-          <Link
-            href="/admin/login"
-            className="inline-flex items-center space-x-2 text-xs uppercase tracking-wider text-saffron-400 hover:text-saffron-300 font-semibold pt-2 transition-colors"
-          >
-            <span>Authorized Administrator Portal</span>
-          </Link>
+        <div className="md:col-span-6 flex flex-col md:items-end space-y-3">
+          <div className="flex flex-col space-y-3 max-w-xs w-full">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-gold-400">Navigation</h4>
+            <ul className="space-y-2 text-xs uppercase tracking-wider font-medium">
+              <li>
+                <Link href="/" className="hover:text-ivory-50 transition-colors">
+                  Homepage
+                </Link>
+              </li>
+              <li>
+                <Link href={yearHref} className="hover:text-ivory-50 transition-colors">
+                  {yearLabel}
+                </Link>
+              </li>
+              <li>
+                <Link href="/archive" className="hover:text-ivory-50 transition-colors">
+                  Past Years Archive
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-ivory-50 transition-colors">
+                  About Our Digital Gallery
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 

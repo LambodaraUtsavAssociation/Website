@@ -121,21 +121,12 @@ export default function Header({
             })}
           </nav>
 
-          {/* Admin Login Shortcut & Mobile Hamburger Button */}
-          <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0">
-            <Link
-              href="/admin/login"
-              aria-label="Admin Login"
-              className="hidden sm:flex items-center space-x-1 px-4 py-1.5 rounded-full bg-charcoal-800/80 border border-charcoal-700 text-[11px] uppercase tracking-wider text-ivory-300 hover:text-gold-400 hover:border-gold-500/40 transition-all font-semibold"
-            >
-              <span>Admin Portal</span>
-            </Link>
-
-            {/* Custom Hamburger Menu Toggle */}
+          {/* Mobile Hamburger Button */}
+          <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 lg:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle navigation menu"
-              className="lg:hidden p-2 rounded-lg bg-charcoal-850/90 border border-charcoal-700 hover:border-gold-500/40 transition-all active:scale-95 flex flex-col justify-center items-center w-10 h-10 relative overflow-hidden"
+              className="p-2 rounded-lg bg-charcoal-850/90 border border-charcoal-700 hover:border-gold-500/40 transition-all active:scale-95 flex flex-col justify-center items-center w-10 h-10 relative overflow-hidden"
             >
               <div className="flex flex-col justify-between w-5 h-3.5 relative">
                 <span
@@ -175,15 +166,6 @@ export default function Header({
                 {link.name}
               </Link>
             ))}
-            <div className="pt-4 border-t border-charcoal-800 flex items-center justify-between">
-              <Link
-                href="/admin/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xs uppercase tracking-wider font-semibold text-gold-400/90 hover:text-gold-400 py-1"
-              >
-                Authorized Admin Portal &rarr;
-              </Link>
-            </div>
           </div>
         </div>
       )}
