@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   description: `A permanent, cinematic digital gallery preserving the faith, tradition, celebration, and memories of ${associationName}, ${villageName}.`,
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/images/village_logo_icon.svg', type: 'image/svg+xml' },
       { url: '/images/village_logo_icon.png', type: 'image/png' },
     ],
