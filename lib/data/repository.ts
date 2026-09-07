@@ -29,7 +29,7 @@ export async function getFestivalYears(onlyPublished = true): Promise<FestivalYe
         query = query.eq('is_published', true);
       }
       const { data, error } = await query;
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data as FestivalYear[];
       }
     } catch {
@@ -84,7 +84,7 @@ export async function getCategories(): Promise<Category[]> {
     try {
       const supabase = createClient();
       const { data, error } = await supabase.from('categories').select('*').order('display_order', { ascending: true });
-      if (!error && data && data.length > 0) return data as Category[];
+      if (!error && data) return data as Category[];
     } catch {
       // Fallback
     }

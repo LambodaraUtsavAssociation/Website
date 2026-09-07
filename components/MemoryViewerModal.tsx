@@ -97,6 +97,52 @@ export default function MemoryViewerModal({
         }
       })
       .catch(() => {});
+
+    // Set up Real-time Supabase Subscription for instant sync across all users
+    let channel: any = null;
+    try {
+      const { createClient } = require('@/lib/supabase/client');
+      const supabase = createClient();
+
+      channel = supabase
+        .channel('realtime-blessings-channel')
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'memories' },
+          (payload: any) => {
+            if (payload.new && payload.new.id) {
+              setBlessingCounts((prev) => ({
+                ...prev,
+                [payload.new.id]: payload.new.blessing_count ?? 0,
+              }));
+            }
+          }
+        )
+        .on('broadcast', { event: 'blessing-update' }, (payload: any) => {
+          if (payload?.payload?.memoryId) {
+            const { memoryId, count } = payload.payload;
+            setBlessingCounts((prev) => ({
+              ...prev,
+              [memoryId]: count,
+            }));
+          }
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Realtime subscription setup warning:', err);
+    }
+
+    return () => {
+      if (channel) {
+        try {
+          const { createClient } = require('@/lib/supabase/client');
+          const supabase = createClient();
+          supabase.removeChannel(channel);
+        } catch {
+          // Ignore
+        }
+      }
+    };
   }, []);
 
   const toggleLike = async (id: string) => {
@@ -118,7 +164,20 @@ export default function MemoryViewerModal({
     const newCount = newLikedState ? currentCount + 1 : Math.max(0, currentCount - 1);
     setBlessingCounts((prev) => ({ ...prev, [id]: newCount }));
 
-    // 3. Persist to Backend DB / Store
+    // 3. Broadcast Real-time event immediately to all active clients
+    try {
+      const { createClient } = require('@/lib/supabase/client');
+      const supabase = createClient();
+      supabase.channel('realtime-blessings-channel').send({
+        type: 'broadcast',
+        event: 'blessing-update',
+        payload: { memoryId: id, count: newCount, action },
+      });
+    } catch {
+      // Ignore
+    }
+
+    // 4. Persist to Backend DB / Store
     try {
       const res = await fetch('/api/memories/bless', {
         method: 'POST',
