@@ -1,5 +1,8 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, ExternalLink } from 'lucide-react';
+import { ShieldCheck, ExternalLink, LogOut } from 'lucide-react';
 
 interface AdminHeaderProps {
   associationName?: string;
@@ -10,6 +13,18 @@ export default function AdminHeader({
   associationName = process.env.NEXT_PUBLIC_ASSOCIATION_NAME || 'Lambodara Utsav Association',
   villageName = process.env.NEXT_PUBLIC_VILLAGE_NAME || 'Papi Reddy Palli',
 }: AdminHeaderProps) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch {
+      // Ignore
+    }
+    router.push('/admin/login');
+    router.refresh();
+  };
+
   return (
     <header className="bg-white border-b-2 border-orange-500 sticky top-0 z-30 px-3 sm:px-8 h-16 flex items-center shadow-xs">
       <div className="w-full max-w-full flex items-center justify-between">
@@ -56,6 +71,17 @@ export default function AdminHeader({
             <ShieldCheck className="w-3.5 h-3.5 text-orange-500" />
             <span>Master Admin Active</span>
           </div>
+
+          {/* Logout Button (Visible on mobile & desktop) */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-xs cursor-pointer"
+            title="Logout of Admin Portal"
+            aria-label="Logout of Admin Portal"
+          >
+            <LogOut className="w-3.5 h-3.5 text-rose-600" />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
     </header>
