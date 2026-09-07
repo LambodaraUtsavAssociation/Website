@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Lock, AlertCircle, ArrowLeft } from 'lucide-react';
 
 function LoginForm() {
-  const [email, setEmail] = useState('admin@VinayakaChavithi.village');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,9 +59,10 @@ function LoginForm() {
         <input
           type="email"
           required
+          autoComplete="username"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="admin@VinayakaChavithi.village"
+          placeholder="vinayakachavithiprp@gmail.com"
           className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
         />
       </div>
@@ -73,6 +74,7 @@ function LoginForm() {
         <input
           type="password"
           required
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter admin password"
@@ -80,18 +82,12 @@ function LoginForm() {
         />
       </div>
 
-      <div className="p-3.5 rounded-xl bg-orange-50/80 border border-orange-200 text-[11px] text-slate-700 space-y-1">
-        <span className="font-bold text-orange-800 block uppercase tracking-wider">Default Credentials for Demo:</span>
-        <p>Email: <code className="bg-white px-1.5 py-0.5 rounded border border-orange-200 text-orange-900 font-mono">admin@VinayakaChavithi.village</code></p>
-        <p>Password: <code className="bg-white px-1.5 py-0.5 rounded border border-orange-200 text-orange-900 font-mono">VillageVinayaka2026!</code></p>
-      </div>
-
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold tracking-wider uppercase shadow-md shadow-orange-500/20 disabled:opacity-50 transition-all cursor-pointer"
+        className="w-full py-3.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-extrabold tracking-wider uppercase shadow-md shadow-orange-500/20 disabled:opacity-50 transition-all cursor-pointer"
       >
-        {isLoading ? 'Verifying Session...' : 'Authenticate & Open Dashboard'}
+        {isLoading ? 'Verifying Credentials...' : 'Authenticate & Open Dashboard'}
       </button>
     </form>
   );

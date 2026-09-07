@@ -49,6 +49,65 @@ export async function clearAdminSession() {
   cookieStore.delete(ADMIN_SESSION_COOKIE);
 }
 
-export function validateAdminCredentials(email: string, pass: string): boolean {
-  return email.trim().toLowerCase() === DEFAULT_ADMIN_EMAIL.toLowerCase() && pass === DEFAULT_ADMIN_PASS;
+const TARGET_ADMIN_EMAIL = (
+  process.env.ADMIN_EMAIL ||
+  process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
+  'vinayakachavithiprp@gmail.com'
+).trim().toLowerCase();
+
+export async function validateSupabaseAuth(
+  email: string,
+  pass: string
+): Promise<{ success: boolean; error?: string }> {
+  const cleanEmail = email.trim().toLowerCase();
+
+  // Enforce authorized administrator email
+  if (cleanEmail !== TARGET_ADMIN_EMAIL) {
+    return {
+      success: false,
+      error: `Access Denied: Only authorized administrator (${TARGET_ADMIN_EMAIL}) is permitted.`,
+    };
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('demo-Vinayaka-Chavithi')) {
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: pass,
+      });
+
+      if (!error && data?.user) {
+        if (data.user.email?.toLowerCase() === TARGET_ADMIN_EMAIL) {
+          return { success: true };
+        } else {
+          return { success: false, error: 'Unauthorized user email.' };
+        }
+      }
+
+      // Check configured admin password fallback
+      const envAdminPass = process.env.ADMIN_PASSWORD || 'Luaprp@2026';
+      if (pass === envAdminPass) {
+        return { success: true };
+      }
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } catch (err: any) {
+      console.error('Supabase Auth verification error:', err);
+    }
+  }
+
+  // Fallback check
+  const envAdminPass = process.env.ADMIN_PASSWORD || 'Luaprp@2026';
+  if (pass === envAdminPass) {
+    return { success: true };
+  }
+
+  return { success: false, error: 'Invalid administrator password.' };
 }

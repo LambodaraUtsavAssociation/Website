@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema } from '@/lib/schemas';
-import { validateAdminCredentials, setAdminSession } from '@/lib/auth';
+import { validateSupabaseAuth, setAdminSession } from '@/lib/auth';
 
 // Basic rate limiting helper (in-memory)
 const attemptsMap = new Map<string, { count: number; resetAt: number }>();
@@ -33,13 +33,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password } = result.data;
-    const isValid = validateAdminCredentials(email, password);
+    const authResult = await validateSupabaseAuth(email, password);
 
-    if (!isValid) {
+    if (!authResult.success) {
       const current = attemptsMap.get(ip);
       if (current) current.count += 1;
       return NextResponse.json(
-        { error: 'Invalid administrator email or password.' },
+        { error: authResult.error || 'Invalid administrator email or password.' },
         { status: 401 }
       );
     }
