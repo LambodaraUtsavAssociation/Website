@@ -274,13 +274,15 @@ export default function MemoryViewerModal({
       <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-4 sm:py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start flex-1">
         {/* Left Primary Column: Media Player + Title + Association Info + Action Pills + Description */}
         <div className="w-full lg:flex-1 flex flex-col min-w-0">
-          {/* Main Media Player Box with Ambient Glow & Gold Accent Border */}
-          <div className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[66vh] xl:h-[72vh] rounded-2xl overflow-hidden bg-black border border-gold-500/30 shadow-2xl shadow-gold-500/5 flex items-center justify-center">
+          {/* Main Media Player Box */}
+          <div className="relative w-full h-[45vh] sm:h-[60vh] lg:h-[66vh] xl:h-[72vh] rounded-xl sm:rounded-2xl overflow-hidden bg-black border border-gold-500/30 shadow-2xl shadow-gold-500/5 flex items-center justify-center">
             {currentMemory.media_type === 'video' ? (
               <video
                 src={currentMemory.storage_path}
                 controls
                 autoPlay
+                playsInline
+                preload="auto"
                 className="w-full h-full object-contain max-h-[72vh]"
                 poster={currentMemory.thumbnail_path || undefined}
               />
@@ -389,10 +391,54 @@ export default function MemoryViewerModal({
               {currentMemory.description || 'Sacred festival memory preserved in the official digital gallery.'}
             </p>
           </div>
+
+          {/* Mobile-only: Horizontal thumbnail strip for navigation (replaces the sidebar) */}
+          {memories.length > 1 && (
+            <div className="lg:hidden mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gold-400">
+                  {memories.length} Memories · Swipe or tap to navigate
+                </span>
+              </div>
+              <div className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar">
+                {memories.map((mem, idx) => {
+                  const isCurrent = idx === selectedIndex;
+                  const mediaInfo = getMediaDisplayInfo(mem);
+                  const isVid = mem.media_type === 'video';
+                  return (
+                    <button
+                      key={mem.id}
+                      type="button"
+                      onClick={() => onNavigate(idx)}
+                      className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all active:scale-95 ${
+                        isCurrent
+                          ? 'border-gold-400 shadow-glow-gold'
+                          : 'border-charcoal-700 opacity-60'
+                      }`}
+                    >
+                      <SafeMediaImage
+                        src={mediaInfo.url}
+                        poster={mediaInfo.poster}
+                        alt={mem.title}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                      {isVid && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Play className="w-3 h-3 fill-white text-white drop-shadow-md" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Right Column: Up Next / Festival Playlist Sidebar (Vivid High-Visibility YouTube Sidebar) */}
-        <aside className="w-full lg:w-96 flex-shrink-0 flex flex-col space-y-3.5">
+        {/* Right Column: Up Next / Festival Playlist Sidebar — hidden on mobile to keep layout clean */}
+        <aside className="hidden lg:flex w-full lg:w-96 flex-shrink-0 flex-col space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-gold-500/20">
             <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-gold-400 flex items-center space-x-2">
               <span>Up Next &bull; Festival Moments</span>

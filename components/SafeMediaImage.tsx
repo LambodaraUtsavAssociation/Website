@@ -38,6 +38,7 @@ export default function SafeMediaImage({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const isVideo = isVideoUrl(src);
+  // Only treat posterUrl as a valid thumbnail if it's NOT a video URL itself
   const posterUrl = poster && !isVideoUrl(poster) ? poster : undefined;
   const hasImageThumbnail = Boolean(posterUrl);
 
@@ -46,10 +47,11 @@ export default function SafeMediaImage({
     if (!videoEl || !isVideo) return;
 
     if (isPlaying || autoPlayVideo) {
+      videoEl.preload = 'auto';
       const playPromise = videoEl.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          // Play error catch
+          // Play error catch — mobile browsers require user gesture
         });
       }
     } else {
@@ -80,25 +82,42 @@ export default function SafeMediaImage({
   }
 
   if (isVideo) {
-    // If a static image thumbnail is available and video is not playing/hovered: show the thumbnail!
-    if (hasImageThumbnail && !isPlaying) {
+    // Not playing — show static content to avoid downloading video data (critical for mobile bandwidth)
+    if (!isPlaying && !autoPlayVideo) {
+      // Has a real image thumbnail → show it (zero video bytes loaded)
+      if (hasImageThumbnail) {
+        return (
+          <Image
+            src={posterUrl!}
+            alt={alt}
+            fill={fill}
+            priority={priority}
+            quality={quality}
+            unoptimized={unoptimized}
+            sizes={sizes}
+            className={className}
+            onLoad={onLoad}
+            onError={() => setHasError(true)}
+          />
+        );
+      }
+
+      // No thumbnail → show a static dark film icon placeholder (no video bytes loaded at all)
       return (
-        <Image
-          src={posterUrl!}
-          alt={alt}
-          fill={fill}
-          priority={priority}
-          quality={quality}
-          unoptimized={unoptimized}
-          sizes={sizes}
-          className={className}
-          onLoad={onLoad}
-          onError={() => setHasError(true)}
-        />
+        <div
+          className={`${
+            fill ? 'absolute inset-0' : 'w-full h-full'
+          } bg-gradient-to-br from-charcoal-950 via-charcoal-900 to-charcoal-950 flex items-center justify-center ${className}`}
+        >
+          <div className="flex flex-col items-center space-y-1 opacity-50">
+            <Film className="w-6 h-6 text-gold-400" />
+            <span className="text-[9px] font-bold uppercase tracking-widest text-gold-300">Film</span>
+          </div>
+        </div>
       );
     }
 
-    // Otherwise (no thumbnail image, or playing on hover): render the active video!
+    // Playing (hover on desktop / opened in modal) → render actual video element
     return (
       <video
         ref={videoRef}
@@ -107,8 +126,7 @@ export default function SafeMediaImage({
         muted
         loop
         playsInline
-        autoPlay
-        preload="auto"
+        preload="metadata"
         onLoadedData={onLoad}
         onCanPlay={onLoad}
         onPlay={onLoad}

@@ -265,7 +265,7 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm"
+          accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime,video/*,image/*"
           className="hidden"
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
@@ -380,7 +380,7 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
                 </div>
 
                 {/* Form Fields */}
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 w-full">
                   <div>
                     <label className="text-[10px] text-orange-700 font-bold uppercase tracking-wider block mb-1">
                       Title

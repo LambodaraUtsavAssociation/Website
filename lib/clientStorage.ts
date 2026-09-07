@@ -1,20 +1,74 @@
-import { createClient } from './supabase/client';
-
 /**
  * Uploads a file directly to Supabase Storage using an admin-signed URL.
  * Bypasses Vercel serverless request body size limits (4.5 MB) completely,
  * allowing video clips and photos of any size (up to 500MB+) to upload cleanly.
+ *
+ * Features:
+ * - Retry logic with exponential backoff (3 attempts) — handles mobile network drops
+ * - 120-second AbortController timeout per attempt — prevents indefinite hangs on slow connections
+ * - iOS-compatible: works with video/quicktime, video/mp4, image/* MIME types
  */
+
+const UPLOAD_TIMEOUT_MS = 120_000; // 120 seconds per attempt
+const MAX_RETRIES = 3;
+
+async function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function uploadWithRetry(
+  signedUrl: string,
+  file: File | Blob,
+  contentType: string,
+  attempt = 1
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      body: file,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return res;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    const isAbort = err?.name === 'AbortError';
+    const isNetwork = err?.name === 'TypeError' || err?.name === 'NetworkError';
+
+    if ((isAbort || isNetwork) && attempt < MAX_RETRIES) {
+      const backoffMs = Math.min(1000 * 2 ** (attempt - 1), 8000); // 1s, 2s, 4s
+      console.warn(`Upload attempt ${attempt} failed (${err?.name}). Retrying in ${backoffMs}ms...`);
+      await delay(backoffMs);
+      return uploadWithRetry(signedUrl, file, contentType, attempt + 1);
+    }
+
+    throw new Error(
+      isAbort
+        ? `Upload timed out after ${UPLOAD_TIMEOUT_MS / 1000}s on attempt ${attempt}. Check your network connection.`
+        : err?.message || 'Network error during upload'
+    );
+  }
+}
+
 export async function uploadFileWithSignedUrl(
   file: File | Blob,
   bucketName: 'festival-media' | 'hero-section',
   folderPrefix: string,
   fileName?: string
 ): Promise<string> {
-  const nameToUse = fileName || (file as File).name || `file_${Date.now()}.webp`;
-  const contentType = file.type || 'application/octet-stream';
+  const nameToUse = fileName || (file as File).name || `file_${Date.now()}.bin`;
 
-  // 1. Request Signed Upload URL from serverless endpoint (lightweight ~100 bytes JSON request)
+  // iOS Safari often reports video/quicktime for .mp4 — normalize to video/mp4 for Supabase compatibility
+  let contentType = file.type || 'application/octet-stream';
+  if (contentType === 'video/quicktime') {
+    contentType = 'video/mp4';
+  }
+
+  // Step 1: Request a signed upload URL (lightweight JSON request to our serverless route)
   const urlRes = await fetch('/api/admin/storage/upload-url', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -31,21 +85,16 @@ export async function uploadFileWithSignedUrl(
     throw new Error(urlData.error || 'Failed to generate signed upload URL');
   }
 
-  // 2. Direct PUT request from browser directly to Supabase Storage endpoint (bypasses Vercel)
-  const uploadRes = await fetch(urlData.signedUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': contentType,
-    },
-    body: file,
-  });
+  // Step 2: PUT directly from browser to Supabase Storage (bypasses Vercel entirely)
+  // Uses retry logic with exponential backoff to handle mobile network drops
+  const uploadRes = await uploadWithRetry(urlData.signedUrl, file, contentType);
 
   if (!uploadRes.ok) {
-    const errorText = await uploadRes.text();
-    throw new Error(`Direct storage upload failed (${uploadRes.status}): ${errorText}`);
+    const errorText = await uploadRes.text().catch(() => 'Unknown error');
+    throw new Error(`Storage upload failed (HTTP ${uploadRes.status}): ${errorText}`);
   }
 
-  return urlData.publicUrl;
+  return urlData.publicUrl as string;
 }
 
 export async function uploadFileToSupabaseStorage(

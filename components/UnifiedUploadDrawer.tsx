@@ -420,7 +420,7 @@ export default function UnifiedUploadDrawer({
                     accept={
                       targetSection === 'hero'
                         ? 'image/jpeg,image/png,image/webp,image/avif,image/*'
-                        : 'image/*,video/*,.mp4,.webm,.mov,.m4v,.avi,.mkv'
+                        : 'image/*,video/*,video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v'
                     }
                     className="hidden"
                     onChange={(e) => {
