@@ -214,8 +214,16 @@ export default function UnifiedUploadDrawer({
 
       try {
         if (targetSection === 'hero') {
+          // Direct client storage upload to bypass serverless 4.5MB payload limits
+          const { uploadFileToSupabaseStorage } = await import('@/lib/clientStorage');
+          const directHeroUrl = await uploadFileToSupabaseStorage(item.file, 'hero-section', 'hero-media');
+
           const formData = new FormData();
-          formData.append('file', item.file);
+          if (directHeroUrl) {
+            formData.append('url', directHeroUrl);
+          } else {
+            formData.append('file', item.file);
+          }
           formData.append('caption', item.title.trim() || item.file.name);
 
           const res = await fetch('/api/admin/hero/upload', {
@@ -228,11 +236,27 @@ export default function UnifiedUploadDrawer({
             throw new Error(data.error || 'Hero upload failed');
           }
         } else {
-          const formData = new FormData();
-          formData.append('file', item.file);
+          // Direct client storage upload for memories (photos & videos of ANY size)
+          const { uploadFileToSupabaseStorage } = await import('@/lib/clientStorage');
+          const directStorageUrl = await uploadFileToSupabaseStorage(item.file, 'festival-media', `${item.mediaType}s`);
+          let directThumbUrl: string | null = null;
           if (item.thumbnailFile) {
-            formData.append('thumbnail', item.thumbnailFile);
+            directThumbUrl = await uploadFileToSupabaseStorage(item.thumbnailFile, 'festival-media', 'thumbnails');
           }
+
+          const formData = new FormData();
+          if (directStorageUrl) {
+            formData.append('storage_path', directStorageUrl);
+            if (directThumbUrl) {
+              formData.append('thumbnail_path', directThumbUrl);
+            }
+          } else {
+            formData.append('file', item.file);
+            if (item.thumbnailFile) {
+              formData.append('thumbnail', item.thumbnailFile);
+            }
+          }
+
           formData.append('title', item.title.trim());
           formData.append('description', description.trim());
           formData.append('festival_year_id', selectedYearId);

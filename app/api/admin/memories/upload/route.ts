@@ -50,10 +50,10 @@ export async function POST(request: NextRequest) {
     const isFeatured = formData.get('is_featured') === 'true';
     const isPublished = formData.get('is_published') !== 'false';
 
-    let storagePath = '';
-    let thumbnailPath = '';
+    let storagePath = (formData.get('storage_path') as string) || '';
+    let thumbnailPath = (formData.get('thumbnail_path') as string) || storagePath;
 
-    if (file && file.size > 0) {
+    if (!storagePath && file && file.size > 0) {
       const timestamp = Date.now();
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const filePath = `${mediaType}s/${timestamp}_${sanitizedName}`;

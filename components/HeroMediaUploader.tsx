@@ -155,8 +155,16 @@ export default function HeroMediaUploader() {
       );
 
       try {
+        const { uploadFileToSupabaseStorage } = await import('@/lib/clientStorage');
+        const directHeroUrl = await uploadFileToSupabaseStorage(item.file, 'hero-section', 'hero-media');
+
         const formData = new FormData();
-        formData.append('file', item.file);
+        if (directHeroUrl) {
+          formData.append('url', directHeroUrl);
+        } else {
+          formData.append('file', item.file);
+        }
+        formData.append('caption', item.originalFile.name);
 
         const res = await fetch('/api/admin/hero/upload', {
           method: 'POST',

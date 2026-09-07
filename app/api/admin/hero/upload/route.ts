@@ -32,6 +32,26 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
+    const directUrl = (formData.get('url') as string) || '';
+    const caption = (formData.get('caption') as string) || '';
+
+    if (directUrl) {
+      logAuditEvent({
+        action: 'UPLOAD_HERO_MEDIA',
+        targetEntity: 'HeroMedia',
+        entityId: caption || 'HeroMedia',
+        request,
+        details: { publicUrl: directUrl },
+      });
+
+      revalidatePath('/', 'layout');
+
+      return NextResponse.json({
+        success: true,
+        url: directUrl,
+        fileName: caption || 'hero_media',
+      });
+    }
 
     if (!file || file.size === 0) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });

@@ -167,13 +167,28 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
         thumbnailBlob = await generateVideoThumbnail(item.file);
       }
 
-      updateItemField(item.id, 'progress', 50);
+      updateItemField(item.id, 'progress', 40);
+
+      // Direct client storage upload for memories (photos & videos of ANY size)
+      const { uploadFileToSupabaseStorage } = await import('@/lib/clientStorage');
+      const directStorageUrl = await uploadFileToSupabaseStorage(item.file, 'festival-media', `${item.mediaType}s`);
+      let directThumbUrl: string | null = null;
+      if (thumbnailBlob && thumbnailBlob instanceof File) {
+        directThumbUrl = await uploadFileToSupabaseStorage(thumbnailBlob, 'festival-media', 'thumbnails');
+      }
+
+      updateItemField(item.id, 'progress', 80);
 
       // Create payload data
       const formData = new FormData();
-      formData.append('file', item.file);
-      if (thumbnailBlob) {
-        formData.append('thumbnail', thumbnailBlob, item.customThumbnailFile ? item.customThumbnailFile.name : 'thumbnail.webp');
+      if (directStorageUrl) {
+        formData.append('storage_path', directStorageUrl);
+        if (directThumbUrl) formData.append('thumbnail_path', directThumbUrl);
+      } else {
+        formData.append('file', item.file);
+        if (thumbnailBlob) {
+          formData.append('thumbnail', thumbnailBlob, item.customThumbnailFile ? item.customThumbnailFile.name : 'thumbnail.webp');
+        }
       }
       formData.append('title', item.title);
       formData.append('description', item.description);
