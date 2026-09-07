@@ -5,20 +5,32 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FestivalYear } from '@/types';
 import { getFestivalYears } from '@/lib/data/repository';
+import RatLoader from '@/components/RatLoader';
 
 export default function ArchivePage() {
   const [years, setYears] = useState<FestivalYear[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const associationName = process.env.NEXT_PUBLIC_ASSOCIATION_NAME || 'Lambodara Utsav Association';
   const villageName = process.env.NEXT_PUBLIC_VILLAGE_NAME || 'Papi Reddy Palli';
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     async function loadYears() {
+      setIsLoading(true);
       const data = await getFestivalYears(true);
       setYears(data);
+      setIsLoading(false);
     }
     loadYears();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-28 pb-20 flex flex-col items-center justify-center">
+        <RatLoader message="Loading Past Years Timeline..." submessage={`${associationName} • ${villageName}`} />
+      </div>
+    );
+  }
 
   const pastYears = years.filter((y) => y.year < currentYear && y.is_published);
 

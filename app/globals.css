@@ -3,8 +3,6 @@
 @tailwind utilities;
 
 :root {
-  --font-jakarta: var(--font-jakarta), 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-cinzel: var(--font-cinzel), 'Cinzel', serif;
   --bg-primary: #0a0a0d;
   --bg-surface: #121217;
   --bg-card: #181820;
@@ -18,7 +16,7 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-main);
-  font-family: var(--font-jakarta);
+  font-family: var(--font-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -26,16 +24,16 @@ body {
 
 /* Primary Font Consistency Across All Elements */
 h1, h2, h3, h4, h5, h6, p, button, a, span, div, input, label, textarea {
-  font-family: var(--font-jakarta);
+  font-family: inherit;
 }
 
 .font-editorial {
-  font-family: var(--font-jakarta);
+  font-family: var(--font-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
   letter-spacing: -0.02em;
 }
 
 .font-year {
-  font-family: var(--font-cinzel) !important;
+  font-family: var(--font-cinzel), 'Cinzel', serif !important;
   letter-spacing: 0.05em;
 }
 

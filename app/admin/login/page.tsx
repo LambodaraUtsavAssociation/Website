@@ -46,14 +46,14 @@ function LoginForm() {
   return (
     <form onSubmit={handleLogin} className="space-y-4">
       {error && (
-        <div className="p-4 rounded-xl bg-maroon-900/60 border border-maroon-700 text-xs text-red-200 flex items-start space-x-2.5">
-          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start space-x-2.5">
+          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       <div>
-        <label className="text-[11px] font-semibold text-ivory-300 uppercase tracking-wider block mb-1.5">
+        <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
           Admin Email Address
         </label>
         <input
@@ -62,12 +62,12 @@ function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="admin@VinayakaChavithi.village"
-          className="w-full px-4 py-3 rounded-xl bg-charcoal-900 border border-charcoal-700 text-sm text-ivory-50 focus:outline-none focus:border-gold-500 transition-colors"
+          className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
         />
       </div>
 
       <div>
-        <label className="text-[11px] font-semibold text-ivory-300 uppercase tracking-wider block mb-1.5">
+        <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
           Password
         </label>
         <input
@@ -76,20 +76,20 @@ function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter admin password"
-          className="w-full px-4 py-3 rounded-xl bg-charcoal-900 border border-charcoal-700 text-sm text-ivory-50 focus:outline-none focus:border-gold-500 transition-colors"
+          className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
         />
       </div>
 
-      <div className="p-3 rounded-xl bg-charcoal-900/60 border border-charcoal-800 text-[11px] text-ivory-400 space-y-1">
-        <span className="font-semibold text-gold-400 block">Default Credentials for Demo:</span>
-        <p>Email: <code className="text-ivory-200">admin@VinayakaChavithi.village</code></p>
-        <p>Password: <code className="text-ivory-200">VillageVinayaka2026!</code></p>
+      <div className="p-3.5 rounded-xl bg-orange-50/80 border border-orange-200 text-[11px] text-slate-700 space-y-1">
+        <span className="font-bold text-orange-800 block uppercase tracking-wider">Default Credentials for Demo:</span>
+        <p>Email: <code className="bg-white px-1.5 py-0.5 rounded border border-orange-200 text-orange-900 font-mono">admin@VinayakaChavithi.village</code></p>
+        <p>Password: <code className="bg-white px-1.5 py-0.5 rounded border border-orange-200 text-orange-900 font-mono">VillageVinayaka2026!</code></p>
       </div>
 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-saffron-600 to-saffron-700 hover:from-saffron-500 hover:to-saffron-600 text-ivory-50 text-xs font-semibold tracking-wider uppercase shadow-glow-saffron disabled:opacity-50 transition-all"
+        className="w-full py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold tracking-wider uppercase shadow-md shadow-orange-500/20 disabled:opacity-50 transition-all cursor-pointer"
       >
         {isLoading ? 'Verifying Session...' : 'Authenticate & Open Dashboard'}
       </button>
@@ -99,33 +99,33 @@ function LoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-charcoal-950 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-slate-50 relative overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-saffron-600/10 blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-200/40 blur-3xl rounded-full pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
         <Link
           href="/"
-          className="inline-flex items-center space-x-1.5 text-xs text-gold-400 hover:text-gold-300 mb-8 transition-colors"
+          className="inline-flex items-center space-x-1.5 text-xs font-semibold text-orange-600 hover:text-orange-700 mb-6 transition-colors bg-white px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Return to Village Memories</span>
         </Link>
 
-        <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-charcoal-700 shadow-2xl space-y-6">
+        <div className="bg-white p-8 sm:p-10 rounded-3xl border-2 border-orange-500 shadow-xl shadow-orange-500/10 space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-full bg-saffron-600/20 border border-saffron-500/40 text-saffron-400 flex items-center justify-center mx-auto mb-3">
-              <Lock className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 border-2 border-orange-500 text-orange-600 flex items-center justify-center mx-auto mb-3 shadow-sm">
+              <Lock className="w-7 h-7" />
             </div>
-            <h1 className="font-editorial text-3xl text-ivory-50 font-normal">
+            <h1 className="text-2xl sm:text-3xl text-slate-900 font-bold tracking-tight">
               Authorized Admin Portal
             </h1>
-            <p className="text-xs text-ivory-400 font-sans">
+            <p className="text-xs text-slate-600 font-sans">
               Single administrator login for village memory management.
             </p>
           </div>
 
-          <Suspense fallback={<div className="text-center text-xs text-ivory-400 py-4">Loading login credentials...</div>}>
+          <Suspense fallback={<div className="text-center text-xs text-slate-500 py-4">Loading login credentials...</div>}>
             <LoginForm />
           </Suspense>
         </div>

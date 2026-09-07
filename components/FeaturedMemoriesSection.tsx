@@ -1,8 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import { Sparkles, Calendar, ArrowRight } from 'lucide-react';
 import { Memory } from '@/types';
+import SafeMediaImage from './SafeMediaImage';
+import { getMediaDisplayInfo } from '@/lib/mediaUtils';
 
 interface FeaturedMemoriesSectionProps {
   memories: Memory[];
@@ -14,6 +15,8 @@ export default function FeaturedMemoriesSection({ memories, onSelectMemory }: Fe
 
   const primaryFeatured = memories[0];
   const secondaryMemories = memories.slice(1, 4);
+
+  const primaryMedia = primaryFeatured ? getMediaDisplayInfo(primaryFeatured) : null;
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -36,14 +39,14 @@ export default function FeaturedMemoriesSection({ memories, onSelectMemory }: Fe
       {/* Editorial Layout: 1 Dominant Card + Supporting Side Column */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         {/* Dominant Featured Card */}
-        {primaryFeatured && (
+        {primaryFeatured && primaryMedia && (
           <div
             onClick={() => onSelectMemory(primaryFeatured)}
             className="lg:col-span-7 group relative rounded-3xl overflow-hidden bg-charcoal-900 border border-charcoal-700/80 cursor-pointer min-h-[420px] lg:min-h-[550px] flex flex-col justify-end p-8 shadow-2xl transition-all duration-700 hover:border-gold-500/50 hover:shadow-glow-gold"
           >
             {/* Background Image */}
-            <Image
-              src={primaryFeatured.thumbnail_path || primaryFeatured.storage_path}
+            <SafeMediaImage
+              src={primaryMedia.url}
               alt={primaryFeatured.title}
               fill
               priority
@@ -89,41 +92,44 @@ export default function FeaturedMemoriesSection({ memories, onSelectMemory }: Fe
 
         {/* Secondary Supporting Grid */}
         <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
-          {secondaryMemories.map((mem) => (
-            <div
-              key={mem.id}
-              onClick={() => onSelectMemory(mem)}
-              className="group relative rounded-2xl overflow-hidden glass-panel border border-charcoal-700/60 p-4 cursor-pointer flex items-center space-x-4 transition-all duration-300 hover:border-gold-500/40 hover:-translate-y-0.5 hover:bg-charcoal-800/90"
-            >
-              {/* Thumbnail */}
-              <div className="relative w-28 h-24 sm:w-36 sm:h-28 rounded-xl overflow-hidden bg-charcoal-900 flex-shrink-0">
-                <Image
-                  src={mem.thumbnail_path || mem.storage_path}
-                  alt={mem.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  sizes="150px"
-                />
-              </div>
+          {secondaryMemories.map((mem) => {
+            const media = getMediaDisplayInfo(mem);
+            return (
+              <div
+                key={mem.id}
+                onClick={() => onSelectMemory(mem)}
+                className="group relative rounded-2xl overflow-hidden glass-panel border border-charcoal-700/60 p-4 cursor-pointer flex items-center space-x-4 transition-all duration-300 hover:border-gold-500/40 hover:-translate-y-0.5 hover:bg-charcoal-800/90"
+              >
+                {/* Thumbnail */}
+                <div className="relative w-28 h-24 sm:w-36 sm:h-28 rounded-xl overflow-hidden bg-charcoal-900 flex-shrink-0">
+                  <SafeMediaImage
+                    src={media.url}
+                    alt={mem.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    sizes="150px"
+                  />
+                </div>
 
-              {/* Text Info */}
-              <div className="flex-1 min-w-0">
-                {mem.category && (
-                  <span className="text-[10px] uppercase tracking-wider text-gold-400 font-semibold mb-1 block">
-                    {mem.category.name}
-                  </span>
-                )}
-                <h4 className="font-editorial text-xl text-ivory-50 group-hover:text-gold-300 transition-colors truncate">
-                  {mem.title}
-                </h4>
-                {mem.description && (
-                  <p className="text-xs text-ivory-400 line-clamp-2 mt-1 leading-relaxed">
-                    {mem.description}
-                  </p>
-                )}
+                {/* Text Info */}
+                <div className="flex-1 min-w-0">
+                  {mem.category && (
+                    <span className="text-[10px] uppercase tracking-wider text-gold-400 font-semibold mb-1 block">
+                      {mem.category.name}
+                    </span>
+                  )}
+                  <h4 className="font-editorial text-xl text-ivory-50 group-hover:text-gold-300 transition-colors truncate">
+                    {mem.title}
+                  </h4>
+                  {mem.description && (
+                    <p className="text-xs text-ivory-400 line-clamp-2 mt-1 leading-relaxed">
+                      {mem.description}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

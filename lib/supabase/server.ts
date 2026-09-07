@@ -39,3 +39,7 @@ export async function createServerSupabaseClient() {
     }
   );
 }
+
+export { createAdminSupabaseClient } from './admin';
+
+

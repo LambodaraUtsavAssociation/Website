@@ -1,85 +1,167 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import { Share2, Check, Maximize2, Play } from 'lucide-react';
 import { Memory } from '@/types';
+import SafeMediaImage from './SafeMediaImage';
+import { getMediaDisplayInfo, getMasonryAspectClass } from '@/lib/mediaUtils';
 
 interface GalleryCardProps {
   memory: Memory;
   onSelect: (memory: Memory) => void;
   priority?: boolean;
+  index?: number;
 }
 
-export default function GalleryCard({ memory, onSelect, priority = false }: GalleryCardProps) {
+export default function GalleryCard({
+  memory,
+  onSelect,
+  priority = false,
+  index = 0,
+}: GalleryCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const imageUrl = memory.thumbnail_path || memory.storage_path;
+  const mediaInfo = getMediaDisplayInfo(memory);
   const isVideo = memory.media_type === 'video';
+  const aspectClass = getMasonryAspectClass(index, memory);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const shareUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}${window.location.pathname}?memory=${memory.id}`
+      : '';
+
+    const shareData = {
+      title: memory.title || 'Lambodara Utsav Memory',
+      text: memory.description || memory.title || 'Check out this memory from Lambodara Utsav (Papi Reddy Palli)!',
+      url: shareUrl,
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy share link:', err);
+      }
+    }
+  };
 
   return (
     <div
       onClick={() => onSelect(memory)}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl bg-charcoal-850 border border-charcoal-700/60 shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-gold-500/40 hover:shadow-glow-gold hover:shadow-2xl"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="w-full group cursor-pointer"
     >
-      {/* Media Image / Video Poster Container */}
-      <div className="relative w-full aspect-[4/3] sm:aspect-[3/2] overflow-hidden bg-charcoal-900">
-        <Image
-          src={imageUrl}
-          alt={memory.title}
-          fill
-          priority={priority}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className={`object-cover object-center transition-all duration-500 group-hover:scale-105 ${
-            isLoaded ? 'opacity-100 blur-0 scale-100' : 'opacity-90 blur-sm scale-105'
-          }`}
-          onLoad={() => setIsLoaded(true)}
-        />
+      <div className="relative overflow-hidden rounded-sm sm:rounded-3xl bg-charcoal-900 border-0 sm:border border-charcoal-800/80 shadow-sm sm:shadow-md transition-all duration-500 group-hover:border-gold-500/40 group-hover:shadow-2xl group-hover:shadow-gold-500/10 group-hover:-translate-y-1">
+        {/* Instagram/Reels Aspect Ratio Media Container */}
+        <div className="relative w-full aspect-[3/4] sm:aspect-[4/5] overflow-hidden bg-charcoal-950">
+          <SafeMediaImage
+            src={mediaInfo.url}
+            poster={mediaInfo.poster}
+            alt={memory.title}
+            fill
+            priority={priority}
+            isPlaying={isHovered}
+            autoPlayVideo={false}
+            sizes="(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 25vw"
+            className={`object-cover object-center transition-all duration-700 group-hover:scale-105 ${
+              isLoaded ? 'opacity-100 blur-0' : 'opacity-90 blur-sm'
+            }`}
+            onLoad={() => setIsLoaded(true)}
+          />
 
-        {/* Video Badge Overlay */}
-        {isVideo && (
-          <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-charcoal-950/85 backdrop-blur-md border border-gold-500/40 text-gold-400 font-semibold text-[10px] tracking-widest uppercase">
-            FILM
-          </div>
-        )}
-
-        {/* Category Pill */}
-        {memory.category && (
-          <div className="absolute top-3 left-3 z-10 px-3 py-1 rounded-full bg-charcoal-950/75 backdrop-blur-md border border-ivory-50/10 text-ivory-200 text-xs font-sans">
-            {memory.category.name}
-          </div>
-        )}
-
-        {/* Featured Badge */}
-        {memory.is_featured && (
-          <div className="absolute bottom-3 left-3 z-10 px-2.5 py-0.5 rounded-md bg-saffron-600/90 text-ivory-50 text-[10px] uppercase tracking-wider font-semibold">
-            FEATURED
-          </div>
-        )}
-
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/30 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-300" />
-      </div>
-
-      {/* Card Information */}
-      <div className="p-4 sm:p-5 flex flex-col justify-between relative z-10">
-        <div>
-          <h4 className="font-editorial text-xl font-normal text-ivory-50 group-hover:text-gold-300 transition-colors line-clamp-1 mb-1">
-            {memory.title}
-          </h4>
-
-          {memory.description && (
-            <p className="text-xs text-ivory-300/80 line-clamp-2 leading-relaxed mb-3">
-              {memory.description}
-            </p>
+          {/* Desktop Top Category Badge */}
+          {memory.category && (
+            <div className="hidden sm:block absolute top-3 left-3 z-20 px-3 py-1 rounded-full bg-charcoal-950/75 backdrop-blur-md border border-ivory-50/15 text-ivory-200 text-[11px] font-sans font-medium">
+              {memory.category.name}
+            </div>
           )}
+
+          {/* Video Badge Overlay — Mobile White Reel Icon vs Desktop Film Badge */}
+          {isVideo && (
+            <>
+              {/* Mobile Reel Icon (Top Right) */}
+              <div className="sm:hidden absolute top-1.5 right-1.5 z-20 p-0.5 drop-shadow-md">
+                <div className="w-5 h-5 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                  <Play className="w-2.5 h-2.5 fill-white text-white translate-x-[0.5px]" />
+                </div>
+              </div>
+
+              {/* Desktop Film Badge */}
+              <div className="hidden sm:flex absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-charcoal-950/85 backdrop-blur-md border border-gold-500/50 text-gold-300 font-semibold text-[10px] tracking-widest uppercase items-center space-x-1 shadow-md">
+                <Play className="w-3 h-3 fill-gold-400 text-gold-400" />
+                <span>FILM</span>
+              </div>
+            </>
+          )}
+
+          {/* Desktop Featured Badge */}
+          {memory.is_featured && !isVideo && (
+            <div className="hidden sm:block absolute top-3 right-3 z-20 px-2.5 py-1 rounded-md bg-saffron-600/90 text-ivory-50 text-[10px] uppercase tracking-wider font-semibold shadow-md">
+              FEATURED
+            </div>
+          )}
+
+          {/* Mobile Bottom Caption Overlay */}
+          <div className="absolute inset-x-0 bottom-0 z-20 p-1.5 sm:hidden bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+            <p className="font-sans text-[11px] font-bold text-ivory-50 line-clamp-2 leading-tight drop-shadow-md">
+              {memory.title}
+            </p>
+          </div>
+
+          {/* Hover Dark Overlay with Center Quick Expand Button (Desktop & Touch) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 z-20">
+            <div className="px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-full bg-gold-500/90 backdrop-blur-md text-charcoal-950 font-semibold text-[10px] sm:text-xs tracking-widest uppercase shadow-glow-gold transition-transform duration-300 group-hover:scale-105 flex items-center space-x-1.5 sm:space-x-2">
+              <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span>EXPAND</span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-charcoal-800 text-[11px] text-ivory-400">
-          <span>{memory.capture_date || 'August 2025'}</span>
+        {/* Equalized Bottom Metadata Bar (Desktop Only) */}
+        <div className="hidden sm:flex p-3.5 sm:p-4 bg-charcoal-900 border-t border-charcoal-800/50 items-start justify-between gap-2 h-24 sm:h-28">
+          <div className="min-w-0 flex-1 h-full flex flex-col justify-between">
+            <div>
+              <h4 className="font-editorial text-base sm:text-lg text-ivory-100 group-hover:text-gold-300 transition-colors line-clamp-1 leading-snug font-normal">
+                {memory.title}
+              </h4>
 
-          <div className="text-[10px] uppercase tracking-widest text-gold-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-            VIEW MEMORY
+              <p className="text-xs text-ivory-400 line-clamp-1 mt-0.5 font-sans font-normal">
+                {memory.description || 'Village celebration memory'}
+              </p>
+            </div>
+
+            <div className="text-[11px] text-ivory-500 font-sans flex items-center space-x-2">
+              <span>{memory.capture_date || 'Vinayaka Chavithi'}</span>
+            </div>
           </div>
+
+          {/* Share Link Button */}
+          <button
+            onClick={handleShare}
+            className={`p-2 rounded-full transition-all flex-shrink-0 mt-0.5 flex items-center justify-center ${
+              copied
+                ? 'bg-gold-500/20 text-gold-300 border border-gold-400/40'
+                : 'text-ivory-400 hover:text-gold-300 hover:bg-charcoal-800'
+            }`}
+            title={copied ? 'Link Copied!' : 'Share Memory Link'}
+          >
+            {copied ? <Check className="w-4 h-4 text-gold-300" /> : <Share2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
     </div>

@@ -46,7 +46,7 @@ const config: Config = {
         }
       },
       fontFamily: {
-        serif: ['var(--font-cormorant)', 'Georgia', 'serif'],
+        serif: ['var(--font-cinzel)', 'Georgia', 'serif'],
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
       },
       boxShadow: {

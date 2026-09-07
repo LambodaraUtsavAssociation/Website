@@ -31,7 +31,7 @@ export default function FestivalIntroSection({
             నిర్విఘ్నం కురు మే దేవ సర్వకార్యేషు సర్వదా ॥&rdquo;
           </p>
           <p className="text-[11px] text-ivory-300 uppercase tracking-widest font-sans">
-            &mdash; O Lord Ganesha, of curved trunk and immense form, radiant as a million suns, remove all obstacles from our paths forever.
+            O Lord Ganesha, of curved trunk and immense form, radiant as a million suns, remove all obstacles from our paths forever.
           </p>
         </div>
 
@@ -57,29 +57,29 @@ export default function FestivalIntroSection({
         </div>
 
         {/* 4 Pillars of Devotion */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 pt-10 border-t border-charcoal-800 text-left">
-          <div className="p-4 border-l-2 border-gold-500/60 bg-charcoal-900/60">
-            <span className="block font-editorial text-lg text-gold-400 font-semibold mb-1">పవిత్ర పూజ</span>
-            <span className="block text-xs uppercase tracking-wider text-ivory-200 font-semibold mb-1">Sacred Pooja</span>
-            <span className="text-[11px] text-ivory-400 leading-snug block">Vedic chants & morning floral offerings.</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-10 sm:mt-12 pt-8 sm:pt-10 border-t border-charcoal-800 text-left">
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-none border-l-2 border-gold-500/60 bg-charcoal-900/80 shadow-md">
+            <span className="block font-editorial text-base sm:text-lg text-gold-400 font-semibold mb-1">పవిత్ర పూజ</span>
+            <span className="block text-[11px] sm:text-xs uppercase tracking-wider text-ivory-200 font-semibold mb-1">Sacred Pooja</span>
+            <span className="text-[10px] sm:text-[11px] text-ivory-400 leading-snug block">Vedic chants & morning floral offerings.</span>
           </div>
 
-          <div className="p-4 border-l-2 border-gold-500/60 bg-charcoal-900/60">
-            <span className="block font-editorial text-lg text-gold-400 font-semibold mb-1">మహా ప్రసాదం</span>
-            <span className="block text-xs uppercase tracking-wider text-ivory-200 font-semibold mb-1">Maha Prasadam</span>
-            <span className="text-[11px] text-ivory-400 leading-snug block">Blessed modak & community meal offerings.</span>
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-none border-l-2 border-gold-500/60 bg-charcoal-900/80 shadow-md">
+            <span className="block font-editorial text-base sm:text-lg text-gold-400 font-semibold mb-1">అన్న ప్రసాదం</span>
+            <span className="block text-[11px] sm:text-xs uppercase tracking-wider text-ivory-200 font-semibold mb-1">Anna Prasadam</span>
+            <span className="text-[10px] sm:text-[11px] text-ivory-400 leading-snug block">Blessed Anna Prasadam &amp; community meal offerings.</span>
           </div>
 
-          <div className="p-4 border-l-2 border-gold-500/60 bg-charcoal-900/60">
-            <span className="block font-editorial text-lg text-gold-400 font-semibold mb-1">భక్తి సంస్కృతి</span>
-            <span className="block text-xs uppercase tracking-wider text-ivory-200 font-semibold mb-1">Devotional Arts</span>
-            <span className="text-[11px] text-ivory-400 leading-snug block">Evening bhajans & village cultural programs.</span>
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-none border-l-2 border-gold-500/60 bg-charcoal-900/80 shadow-md">
+            <span className="block font-editorial text-base sm:text-lg text-gold-400 font-semibold mb-1">భక్తి సంస్కృతి</span>
+            <span className="block text-[11px] sm:text-xs uppercase tracking-wider text-ivory-200 font-semibold mb-1">Devotional Arts</span>
+            <span className="text-[10px] sm:text-[11px] text-ivory-400 leading-snug block">Evening bhajans & village cultural programs.</span>
           </div>
 
-          <div className="p-4 border-l-2 border-gold-400 bg-charcoal-900/60">
-            <span className="block font-editorial text-lg text-gold-400 font-semibold mb-1">శోభా యాత్ర</span>
-            <span className="block text-xs uppercase tracking-wider text-ivory-200 font-semibold mb-1">Grand Immersion</span>
-            <span className="text-[11px] text-ivory-400 leading-snug block">Solemn Lake Nimajjanam farewell procession.</span>
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-none border-l-2 border-gold-400 bg-charcoal-900/80 shadow-md">
+            <span className="block font-editorial text-base sm:text-lg text-gold-400 font-semibold mb-1">శోభా యాత్ర</span>
+            <span className="block text-[11px] sm:text-xs uppercase tracking-wider text-ivory-200 font-semibold mb-1">Grand Immersion</span>
+            <span className="text-[10px] sm:text-[11px] text-ivory-400 leading-snug block">Solemn Lake Nimajjanam farewell procession.</span>
           </div>
         </div>
 

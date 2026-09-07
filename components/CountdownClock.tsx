@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import {
   getFestivalDates,
-  isFestivalActive,
-  hasFestivalEnded,
   getCurrentFestivalDay,
 } from '@/lib/festivalDates';
 
@@ -60,43 +58,43 @@ export default function CountdownClock({ targetYear = new Date().getFullYear() }
   if (timeLeft.isStarted) {
     return (
       <div className="px-5 py-2.5 rounded-full bg-saffron-600/20 border border-saffron-500/40 text-saffron-300 text-[10px] sm:text-xs font-semibold uppercase tracking-widest animate-pulse shadow-glow-saffron">
-        ✨ Festival Celebrations Are Currently Underway (Day {timeLeft.festivalDay} of 5) ✨
+        &bull; Festival Celebrations Are Currently Underway (Day {timeLeft.festivalDay} of 5) &bull;
       </div>
     );
   }
 
-  // Stage 3: Live Countdown to Festival Start
+  // Stage 3: Live Countdown to Festival Start (Identical Web Bar Layout across Mobile & Web)
   return (
     <div
-      className="flex items-center space-x-2 sm:space-x-6 py-2.5 sm:py-3 px-3.5 sm:px-6 border-x-2 border-gold-500/40 bg-charcoal-950/90 shadow-2xl backdrop-blur-md max-w-full overflow-x-auto no-scrollbar"
+      className="flex items-center space-x-3 sm:space-x-6 py-2.5 sm:py-3 px-4 sm:px-6 border-x-2 border-gold-500/40 bg-charcoal-950/90 shadow-2xl backdrop-blur-md max-w-full"
       suppressHydrationWarning
     >
-      <div className="text-center min-w-[44px] sm:min-w-[56px]">
-        <span className="block font-editorial text-xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
+      <div className="text-center min-w-[42px] sm:min-w-[56px]">
+        <span className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
           {String(timeLeft.days).padStart(2, '0')}
         </span>
-        <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans">Days</span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">Days</span>
       </div>
       <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light">:</span>
-      <div className="text-center min-w-[44px] sm:min-w-[56px]">
-        <span className="block font-editorial text-xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
+      <div className="text-center min-w-[42px] sm:min-w-[56px]">
+        <span className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
           {String(timeLeft.hours).padStart(2, '0')}
         </span>
-        <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans">Hours</span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">Hours</span>
       </div>
       <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light">:</span>
-      <div className="text-center min-w-[44px] sm:min-w-[56px]">
-        <span className="block font-editorial text-xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
+      <div className="text-center min-w-[42px] sm:min-w-[56px]">
+        <span className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
           {String(timeLeft.minutes).padStart(2, '0')}
         </span>
-        <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans">Mins</span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">Mins</span>
       </div>
       <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light">:</span>
-      <div className="text-center min-w-[44px] sm:min-w-[56px]">
-        <span className="block font-editorial text-xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
+      <div className="text-center min-w-[42px] sm:min-w-[56px]">
+        <span className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
           {String(timeLeft.seconds).padStart(2, '0')}
         </span>
-        <span className="text-[8px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans">Secs</span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">Secs</span>
       </div>
     </div>
   );

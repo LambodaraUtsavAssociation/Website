@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { Memory } from '@/types';
+import SafeMediaImage from './SafeMediaImage';
+import { getMediaDisplayInfo } from '@/lib/mediaUtils';
 
 interface FeaturedVideoSectionProps {
   video: Memory | null;
@@ -14,6 +15,8 @@ export default function FeaturedVideoSection({ video, onSelect }: FeaturedVideoS
   const [isMuted, setIsMuted] = useState(true);
 
   if (!video) return null;
+
+  const mediaInfo = getMediaDisplayInfo(video);
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -52,8 +55,8 @@ export default function FeaturedVideoSection({ video, onSelect }: FeaturedVideoS
                 onClick={() => setIsPlaying(true)}
                 className="relative w-full h-full cursor-pointer flex items-center justify-center"
               >
-                <Image
-                  src={video.thumbnail_path || video.storage_path}
+                <SafeMediaImage
+                  src={mediaInfo.url}
                   alt={video.title}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { FestivalYear } from '@/types';
+import SafeMediaImage from './SafeMediaImage';
 
 interface ArchiveYearsSectionProps {
   years: FestivalYear[];
@@ -42,8 +43,8 @@ export default function ArchiveYearsSection({
           >
             {/* Background Image Preview */}
             <div className="relative w-full h-52 rounded-2xl overflow-hidden mb-6 bg-charcoal-900">
-              <Image
-                src={y.cover_image_url || 'https://images.unsplash.com/photo-1567157577867-05ccb1388e66?q=70&w=600&auto=format&fit=crop'}
+              <SafeMediaImage
+                src={y.cover_image_url}
                 alt={y.title}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"

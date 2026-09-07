@@ -13,7 +13,6 @@ import {
 import HeroSection from '@/components/HeroSection';
 import FestivalIntroSection from '@/components/FestivalIntroSection';
 import CelebrationChaptersSection from '@/components/CelebrationChaptersSection';
-import FeaturedVideoSection from '@/components/FeaturedVideoSection';
 import ArchiveYearsSection from '@/components/ArchiveYearsSection';
 import MemoryViewerModal from '@/components/MemoryViewerModal';
 
@@ -35,9 +34,11 @@ export default function HomePage() {
   const [allMemories, setAllMemories] = useState<Memory[]>([]);
   const [featuredVideo, setFeaturedVideo] = useState<Memory | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
+      setIsLoading(true);
       const years = await getFestivalYears(true);
       setAllYears(years);
 
@@ -56,6 +57,7 @@ export default function HomePage() {
 
       const vid = await getFeaturedVideo();
       setFeaturedVideo(vid);
+      setIsLoading(false);
     }
 
     loadData();
@@ -83,10 +85,8 @@ export default function HomePage() {
         categories={categories}
         memories={allMemories}
         onSelectMemory={handleSelectMemory}
+        isLoading={isLoading}
       />
-
-      {/* Featured Video (Hides automatically if no video exists) */}
-      <FeaturedVideoSection video={featuredVideo} onSelect={handleSelectMemory} />
 
       {/* Archive Years Section */}
       <ArchiveYearsSection years={allYears} />

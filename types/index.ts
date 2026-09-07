@@ -62,6 +62,7 @@ export interface Memory {
   is_featured: boolean;
   is_published: boolean;
   display_order: number;
+  blessing_count?: number;
   metadata?: Record<string, any>;
   deleted_at?: string | null;
   created_at: string;

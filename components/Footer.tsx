@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { FestivalYear } from '@/types';
 import { getActiveFestivalYear } from '@/lib/data/repository';
 
@@ -15,6 +16,7 @@ export default function Footer({
   associationName = process.env.NEXT_PUBLIC_ASSOCIATION_NAME || 'Lambodara Utsav Association',
   villageName = process.env.NEXT_PUBLIC_VILLAGE_NAME || 'Papi Reddy Palli',
 }: FooterProps) {
+  const pathname = usePathname();
   const [activeYear, setActiveYear] = useState<FestivalYear | null>({
     id: 'f2026000-0000-0000-0000-000000002026',
     year: 2026,
@@ -26,12 +28,17 @@ export default function Footer({
   });
 
   useEffect(() => {
+    if (pathname?.startsWith('/admin')) return;
     async function fetchYear() {
       const yearObj = await getActiveFestivalYear();
       if (yearObj) setActiveYear(yearObj);
     }
     fetchYear();
-  }, []);
+  }, [pathname]);
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const yearLabel = activeYear ? `${activeYear.year} Celebration` : '2026 Celebration';
   const yearHref = activeYear ? `/${activeYear.slug}` : '/2026';
@@ -65,7 +72,7 @@ export default function Footer({
                 {associationName}
               </span>
               <span className="text-[10px] uppercase tracking-widest text-gold-400 font-sans font-semibold">
-                {villageName} &bull; Vinayaka Chavithi
+                {villageName}
               </span>
             </div>
           </div>
