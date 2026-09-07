@@ -177,8 +177,12 @@ export default function AdminUploadPage() {
 
       try {
         if (targetSection === 'hero') {
+          // Direct signed client storage upload to bypass serverless 4.5MB payload limits
+          const { uploadFileWithSignedUrl } = await import('@/lib/clientStorage');
+          const directHeroUrl = await uploadFileWithSignedUrl(item.file, 'hero-section', 'hero-media');
+
           const formData = new FormData();
-          formData.append('file', item.file);
+          formData.append('url', directHeroUrl);
           formData.append('caption', item.title.trim() || item.file.name);
 
           const res = await fetch('/api/admin/hero/upload', {
@@ -191,11 +195,20 @@ export default function AdminUploadPage() {
             throw new Error(data.error || 'Hero upload failed');
           }
         } else {
-          const formData = new FormData();
-          formData.append('file', item.file);
+          // Direct signed client storage upload for memories (photos & videos of ANY size)
+          const { uploadFileWithSignedUrl } = await import('@/lib/clientStorage');
+          const directStorageUrl = await uploadFileWithSignedUrl(item.file, 'festival-media', `${item.mediaType}s`);
+          let directThumbUrl: string | null = null;
           if (item.thumbnailFile) {
-            formData.append('thumbnail', item.thumbnailFile);
+            directThumbUrl = await uploadFileWithSignedUrl(item.thumbnailFile, 'festival-media', 'thumbnails');
           }
+
+          const formData = new FormData();
+          formData.append('storage_path', directStorageUrl);
+          if (directThumbUrl) {
+            formData.append('thumbnail_path', directThumbUrl);
+          }
+
           formData.append('title', item.title.trim());
           formData.append('description', description.trim());
           formData.append('festival_year_id', selectedYearId);
