@@ -133,10 +133,10 @@ export default function HeroSection({
 
       {/* Hero Content — Adjusted to Bottom-Left on Mobile & Centered on Desktop */}
       <div className="relative z-30 max-w-5xl mx-auto px-5 sm:px-6 w-full flex flex-col justify-end items-start text-left sm:justify-center sm:items-center sm:text-center h-full pt-20 pb-10 sm:pt-20 sm:pb-8">
-        {/* Cultural Arched Status Banner — Identical to Web */}
-        <div className="relative py-1.5 sm:py-2 px-5 sm:px-8 border-y-2 border-gold-500/40 bg-charcoal-950/85 backdrop-blur-md mb-3 sm:mb-6 max-w-full shadow-lg self-start sm:self-center">
+        {/* Cultural Arched Status Banner — Full Width on Mobile, Centered on Web */}
+        <div className="relative py-2 sm:py-2 px-4 sm:px-8 border-y-2 border-gold-500/40 bg-charcoal-950/85 backdrop-blur-md mb-3 sm:mb-6 w-full sm:w-auto shadow-lg flex items-center justify-center text-center self-stretch sm:self-center">
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gold-400 rotate-45 border border-charcoal-950" />
-          <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] sm:tracking-[0.25em] text-gold-300 block truncate">
+          <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.25em] text-gold-300 block text-center truncate">
             Inaugural Digital Launch &bull; Sept 14, {currentCalYear}
           </span>
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gold-400 rotate-45 border border-charcoal-950" />
@@ -163,9 +163,9 @@ export default function HeroSection({
           &ldquo;A celebration of faith, lights, tradition, and the memories we create together.&rdquo;
         </p>
 
-        {/* Live Countdown Clock */}
-        <div className="mb-5 sm:mb-8 w-full flex justify-start sm:justify-center">
-          <CountdownClock targetYear={currentCalYear} />
+        {/* Live Countdown Clock — Full Width on Mobile, Centered on Web */}
+        <div className="mb-5 sm:mb-8 w-full flex justify-center">
+          <CountdownClock targetYear={currentCalYear} className="w-full sm:w-auto" />
         </div>
 
         {/* Action Buttons — Identical Web Styling */}
