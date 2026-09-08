@@ -13,10 +13,10 @@ export default function ArchiveYearsSection({
   villageName = process.env.NEXT_PUBLIC_VILLAGE_NAME || 'Papi Reddy Palli',
 }: ArchiveYearsSectionProps) {
   const currentYear = new Date().getFullYear();
-  // Show section ONLY if at least one past published year exists before the current year
-  const pastYears = (years || []).filter((y) => y.year < currentYear && y.is_published);
+  // Show section if at least one other published year exists
+  const timelineYears = (years || []).filter((y) => y.is_published && y.year !== currentYear);
 
-  if (pastYears.length === 0) return null;
+  if (timelineYears.length === 0) return null;
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-charcoal-800">
@@ -26,7 +26,7 @@ export default function ArchiveYearsSection({
             Digital Visual History
           </span>
           <h2 className="font-editorial text-3xl sm:text-5xl text-ivory-50 font-normal">
-            Past Celebrations Timeline
+            Celebrations Timeline
           </h2>
         </div>
         <p className="text-xs text-ivory-400 max-w-xs mt-2 sm:mt-0 leading-relaxed font-sans">
@@ -35,7 +35,7 @@ export default function ArchiveYearsSection({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {pastYears.map((y) => (
+        {timelineYears.map((y) => (
           <Link
             key={y.id}
             href={`/${y.slug}`}

@@ -27,12 +27,12 @@ export default function AdminSidebar({
   };
 
   const links = [
-    { name: 'Dashboard Overview', href: '/admin', icon: LayoutDashboard },
+    { name: 'Overview', href: '/admin', icon: LayoutDashboard },
+    { name: 'Media Library', href: '/admin/memories', icon: Images },
     { name: 'Upload Media', href: '/admin/upload', icon: Upload },
-    { name: 'Hero Banner Media', href: '/admin/hero', icon: Sparkles },
+    { name: 'Hero Carousel', href: '/admin/hero', icon: Sparkles },
     { name: 'Festival Years', href: '/admin/years', icon: Calendar },
-    { name: 'Media Memories', href: '/admin/memories', icon: Images },
-    { name: 'Categories & Chapters', href: '/admin/categories', icon: Tag },
+    { name: 'Categories', href: '/admin/categories', icon: Tag },
   ];
 
   return (

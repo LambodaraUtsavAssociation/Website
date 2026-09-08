@@ -55,33 +55,18 @@ export default function AdminHeader({
           </div>
         </div>
 
-        {/* Header Right Actions & Badges */}
+        {/* Right: Quick Link to Public Website */}
         <div className="flex items-center space-x-2 flex-shrink-0">
           <Link
             href="/"
             target="_blank"
-            className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-[10px] uppercase font-bold tracking-wider transition-all active:scale-95 shadow-xs"
-            title="Open Public Website"
+            rel="noopener noreferrer"
+            className="inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold border border-orange-200 transition-all active:scale-95 shadow-2xs"
+            title="Open live public website in new tab"
           >
-            <span>Public Site</span>
-            <ExternalLink className="w-3 h-3 text-orange-600" />
+            <ExternalLink className="w-3.5 h-3.5 text-orange-600" />
+            <span className="text-[11px] sm:text-xs">Website</span>
           </Link>
-
-          <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-700 text-[10px] uppercase tracking-wider font-semibold shadow-xs">
-            <ShieldCheck className="w-3.5 h-3.5 text-orange-500" />
-            <span>Master Admin Active</span>
-          </div>
-
-          {/* Logout Button (Visible on mobile & desktop) */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-xs cursor-pointer"
-            title="Logout of Admin Portal"
-            aria-label="Logout of Admin Portal"
-          >
-            <LogOut className="w-3.5 h-3.5 text-rose-600" />
-            <span>Logout</span>
-          </button>
         </div>
       </div>
     </header>

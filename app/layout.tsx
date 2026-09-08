@@ -4,6 +4,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ToastContainer from '@/components/ToastContainer';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 const cinzel = Cinzel({
   subsets: ['latin'],
@@ -51,6 +52,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${plusJakartaSans.variable} ${cinzel.variable}`} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://pub-13aeba224f4f47cba2eb4c85f116f469.r2.dev" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://pub-13aeba224f4f47cba2eb4c85f116f469.r2.dev" />
+        <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://img.youtube.com" />
+        <link rel="preconnect" href="https://www.youtube-nocookie.com" />
+        <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
@@ -58,6 +65,7 @@ export default function RootLayout({
         className="bg-charcoal-950 text-ivory-50 min-h-screen flex flex-col selection:bg-saffron-600 selection:text-white font-sans"
         suppressHydrationWarning
       >
+        <ServiceWorkerRegister />
         <Header associationName={associationName} villageName={villageName} />
         <main className="flex-1">{children}</main>
         <Footer associationName={associationName} villageName={villageName} />

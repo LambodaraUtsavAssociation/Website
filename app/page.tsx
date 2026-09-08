@@ -37,30 +37,43 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadData() {
-      setIsLoading(true);
-      const years = await getFestivalYears(true);
-      setAllYears(years);
+      try {
+        const [years, cats, memories] = await Promise.all([
+          getFestivalYears(true),
+          getCategories(),
+          getMemories({ onlyPublished: true }),
+        ]);
 
-      const activeYear = await getActiveFestivalYear();
-      if (activeYear) {
-        setFestivalYear(activeYear);
-      } else if (years.length > 0) {
-        setFestivalYear(years[0]);
+        if (!isMounted) return;
+
+        setAllYears(years);
+        setCategories(cats);
+        setAllMemories(memories);
+
+        // Derive active year without an extra query
+        const activeYear = years.find((y) => y.slug === '2026' || y.year === 2026) || years[0] || null;
+        if (activeYear) {
+          setFestivalYear(activeYear);
+        }
+
+        // Derive featured video from already fetched memories
+        const vid = memories.find((m) => m.media_type === 'video' && m.is_featured) ||
+                    memories.find((m) => m.media_type === 'video') || null;
+        setFeaturedVideo(vid);
+      } catch (err) {
+        console.error('Failed to load homepage data:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-
-      const cats = await getCategories();
-      setCategories(cats);
-
-      const memories = await getMemories({ onlyPublished: true });
-      setAllMemories(memories);
-
-      const vid = await getFeaturedVideo();
-      setFeaturedVideo(vid);
-      setIsLoading(false);
     }
 
     loadData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSelectMemory = (memory: Memory) => {

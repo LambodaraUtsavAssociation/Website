@@ -40,21 +40,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid file reference' }, { status: 400 });
     }
 
-    let deletedFromSupabase = false;
     const adminSupabase = createAdminSupabaseClient();
 
-    if (adminSupabase && targetFileName) {
-      const possibleBuckets = ['hero-section', 'Hero Section', 'hero_section', 'hero-media'];
-      for (const bucketName of possibleBuckets) {
-        try {
-          const { data, error } = await adminSupabase.storage.from(bucketName).remove([targetFileName]);
-          if (!error && data && data.length > 0) {
-            deletedFromSupabase = true;
-            break;
-          }
-        } catch (err) {
-          // continue checking next bucket
-        }
+    // 1. Delete from Cloudflare R2 if URL is R2
+    try {
+      const { deleteR2Object } = await import('@/lib/r2');
+      if (url) {
+        await deleteR2Object(url);
+      }
+    } catch (r2Err) {
+      console.warn('R2 delete warning:', r2Err);
+    }
+
+    // 2. Delete from Supabase hero_media table
+    if (adminSupabase && url) {
+      try {
+        await adminSupabase.from('hero_media').delete().eq('url', url);
+      } catch (dbErr) {
+        console.warn('Supabase hero_media delete warning:', dbErr);
       }
     }
 

@@ -1,64 +1,91 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   Upload,
   Sparkles,
-  Images,
-  RefreshCw,
-  AlertCircle,
-  CheckCircle2,
-  Calendar,
-  Tag,
-  Film,
-  FileCheck,
+  Camera,
+  Youtube,
   Plus,
   Trash2,
-  Camera,
-  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  Play,
+  Film,
+  Layers,
+  HelpCircle,
+  Calendar,
+  Tag,
+  Info,
+  ArrowRight,
 } from 'lucide-react';
 import AdminHeader from '@/components/AdminHeader';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminMobileBottomBar from '@/components/AdminMobileBottomBar';
-import SafeMediaImage from '@/components/SafeMediaImage';
 import CustomDropdown, { DropdownOption } from '@/components/CustomDropdown';
 import { toast } from '@/lib/toastStore';
 import { FestivalYear, Category } from '@/types';
 import { getFestivalYears, getCategories } from '@/lib/data/repository';
+import { parseYouTubeUrl } from '@/lib/youtube';
+import { uploadImageToR2 } from '@/lib/clientStorage';
 
-interface UploadBatchItem {
+interface PhotoBatchItem {
   id: string;
   file: File;
   previewUrl: string;
-  mediaType: 'image' | 'video';
   title: string;
+  teluguTitle: string;
+  sizeFormatted: string;
   status: 'idle' | 'uploading' | 'success' | 'error';
   errorMessage?: string;
-  generatedId: string;
-  thumbnailFile?: File;
-  thumbnailPreviewUrl?: string;
+}
+
+interface YouTubeBatchItem {
+  id: string;
+  youtubeUrl: string;
+  videoId: string | null;
+  thumbnailUrl: string | null;
+  title: string;
+  teluguTitle: string;
+  status: 'idle' | 'uploading' | 'success' | 'error';
+  errorMessage?: string;
 }
 
 const MAX_BATCH_SIZE = 5;
 
-export default function AdminUploadPage() {
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function UploadContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const shouldFeatureInHero = searchParams.get('feature') === 'hero';
+
+  // Mode: Photos (R2) vs YouTube Videos
+  const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
+
+  // Photo batch
+  const [photoBatch, setPhotoBatch] = useState<PhotoBatchItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [targetSection, setTargetSection] = useState<'memories' | 'hero'>('memories');
-  const [batchItems, setBatchItems] = useState<UploadBatchItem[]>([]);
+  // YouTube batch
+  const [youtubeBatch, setYoutubeBatch] = useState<YouTubeBatchItem[]>([]);
 
-  // Memory Specific Shared Fields
+  // Metadata
   const [years, setYears] = useState<FestivalYear[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedYearId, setSelectedYearId] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [captureDate, setCaptureDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
-  const [captureDate, setCaptureDate] = useState('2026-09-08');
-  const [isFeatured, setIsFeatured] = useState(false);
+  const [isFeaturedInHero, setIsFeaturedInHero] = useState(shouldFeatureInHero);
 
-  // Upload Progress State
+  // Status
   const [uploading, setUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -68,11 +95,27 @@ export default function AdminUploadPage() {
 
   async function loadMetadata() {
     try {
-      const yrs = await getFestivalYears(false);
+      let yrs: FestivalYear[] = [];
+      try {
+        const res = await fetch('/api/admin/years', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.years && Array.isArray(data.years) && data.years.length > 0) {
+            yrs = data.years;
+          }
+        }
+      } catch {
+        // Fallback to repository
+      }
+
+      if (yrs.length === 0) {
+        yrs = await getFestivalYears(false);
+      }
+
+      const cats = await getCategories();
       setYears(yrs);
       if (yrs.length > 0) setSelectedYearId(yrs[0].id);
 
-      const cats = await getCategories();
       setCategories(cats);
       if (cats.length > 0) setSelectedCategoryId(cats[0].id);
     } catch (err) {
@@ -80,165 +123,155 @@ export default function AdminUploadPage() {
     }
   }
 
-  const selectedYearObj = years.find((y) => y.id === selectedYearId);
-  const yearNumber = selectedYearObj ? selectedYearObj.year : 2026;
-
+  // ── Photo Selection Handlers ──────────────────────────────────────────────
   const handleFilesSelected = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setErrorMsg(null);
 
-    const availableSlots = MAX_BATCH_SIZE - batchItems.length;
+    const availableSlots = MAX_BATCH_SIZE - photoBatch.length;
     if (availableSlots <= 0) {
-      toast.warning('Batch Limit Reached', `Maximum allowed uploads per batch is ${MAX_BATCH_SIZE} files.`);
+      toast.warning('Batch Limit Reached', `Maximum ${MAX_BATCH_SIZE} photos per batch.`);
       return;
     }
 
     const filesToProcess = Array.from(files).slice(0, availableSlots);
     if (files.length > availableSlots) {
-      toast.info('Batch Capped', `Only the first ${availableSlots} files were added. Max limit is 5 files.`);
+      toast.info('Batch Capped', `Added ${availableSlots} photos. Maximum is ${MAX_BATCH_SIZE} at a time.`);
     }
 
-    const newQueueItems: UploadBatchItem[] = filesToProcess.map((file, idx) => {
-      const isVideo = file.type.startsWith('video/');
-      const mediaType: 'image' | 'video' = isVideo ? 'video' : 'image';
-      const previewUrl = URL.createObjectURL(file);
-      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
-
-      const currentIndex = batchItems.length + idx + 1;
-      const seqStr = String(currentIndex).padStart(3, '0');
-      const genId = targetSection === 'memories' ? `MEM-${yearNumber}-${seqStr}` : `HERO-${yearNumber}-${seqStr}`;
+    const newItems: PhotoBatchItem[] = filesToProcess.map((file) => {
+      const cleanName = file.name
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 
       return {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         file,
-        previewUrl,
-        mediaType,
+        previewUrl: URL.createObjectURL(file),
         title: cleanName,
+        teluguTitle: '',
+        sizeFormatted: formatFileSize(file.size),
         status: 'idle',
-        generatedId: genId,
       };
     });
 
-    setBatchItems((prev) => [...prev, ...newQueueItems]);
+    setPhotoBatch((prev) => [...prev, ...newItems]);
   };
 
-  const removeBatchItem = (id: string) => {
-    setBatchItems((prev) => {
-      const filtered = prev.filter((item) => item.id !== id);
-      return filtered.map((item, idx) => {
-        const seqStr = String(idx + 1).padStart(3, '0');
-        const genId = targetSection === 'memories' ? `MEM-${yearNumber}-${seqStr}` : `HERO-${yearNumber}-${seqStr}`;
-        return { ...item, generatedId: genId };
-      });
-    });
+  const removePhotoItem = (id: string) => {
+    setPhotoBatch((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleReset = () => {
-    setBatchItems([]);
-    setDescription('');
-    setErrorMsg(null);
-    setUploading(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const updatePhotoTitle = (id: string, title: string) => {
+    setPhotoBatch((prev) => prev.map((item) => (item.id === id ? { ...item, title } : item)));
+  };
+
+  const updatePhotoTeluguTitle = (id: string, teluguTitle: string) => {
+    setPhotoBatch((prev) => prev.map((item) => (item.id === id ? { ...item, teluguTitle } : item)));
+  };
+
+  // ── YouTube Handlers ───────────────────────────────────────────────────────
+  const addYouTubeItem = () => {
+    if (youtubeBatch.length >= MAX_BATCH_SIZE) {
+      toast.warning('Batch Limit Reached', `Maximum ${MAX_BATCH_SIZE} YouTube videos per batch.`);
+      return;
     }
+    const newItem: YouTubeBatchItem = {
+      id: `yt-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      youtubeUrl: '',
+      videoId: null,
+      thumbnailUrl: null,
+      title: '',
+      teluguTitle: '',
+      status: 'idle',
+    };
+    setYoutubeBatch((prev) => [...prev, newItem]);
   };
 
-  const executeUpload = async () => {
-    if (batchItems.length === 0) {
-      setErrorMsg('Please select at least 1 image or video file (up to 5 max).');
+  const updateYouTubeUrl = (id: string, youtubeUrl: string) => {
+    const parsed = parseYouTubeUrl(youtubeUrl);
+    setYoutubeBatch((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              youtubeUrl,
+              videoId: parsed?.videoId || null,
+              thumbnailUrl: parsed?.thumbnailUrl || null,
+              title: item.title || (parsed?.videoId ? `Festival Celebration Video` : ''),
+            }
+          : item
+      )
+    );
+  };
+
+  const updateYouTubeTitle = (id: string, title: string) => {
+    setYoutubeBatch((prev) => prev.map((item) => (item.id === id ? { ...item, title } : item)));
+  };
+
+  const updateYouTubeTeluguTitle = (id: string, teluguTitle: string) => {
+    setYoutubeBatch((prev) => prev.map((item) => (item.id === id ? { ...item, teluguTitle } : item)));
+  };
+
+  const removeYouTubeItem = (id: string) => {
+    setYoutubeBatch((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // ── Execute Photo Upload to Cloudflare R2 ──────────────────────────────────
+  const executePhotoUpload = async () => {
+    if (photoBatch.length === 0) {
+      setErrorMsg('Please select at least 1 photo to upload.');
       return;
     }
 
-    if (targetSection === 'memories') {
-      const emptyIdx = batchItems.findIndex((i) => !i.title.trim());
-      if (emptyIdx !== -1) {
-        setErrorMsg(`Please enter a title for file #${emptyIdx + 1} (${batchItems[emptyIdx].file.name}).`);
-        return;
-      }
+    const emptyIdx = photoBatch.findIndex((i) => !i.title.trim());
+    if (emptyIdx !== -1) {
+      setErrorMsg(`Please enter a title for photo #${emptyIdx + 1}.`);
+      return;
     }
 
     setUploading(true);
     setErrorMsg(null);
-
     let successCount = 0;
     let failCount = 0;
 
-    for (let index = 0; index < batchItems.length; index++) {
-      const item = batchItems[index];
-
+    for (const item of photoBatch) {
       if (item.status === 'success') {
         successCount++;
         continue;
       }
 
-      setBatchItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i))
-      );
+      setPhotoBatch((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i)));
 
       try {
-        if (targetSection === 'hero') {
-          // Direct signed client storage upload to bypass serverless 4.5MB payload limits
-          const { uploadFileWithSignedUrl } = await import('@/lib/clientStorage');
-          const directHeroUrl = await uploadFileWithSignedUrl(item.file, 'hero-section', 'hero-media');
+        // Step 1: Upload directly to Cloudflare R2 bucket
+        const { publicUrl, thumbnailUrl } = await uploadImageToR2(item.file, 'photos');
 
-          const formData = new FormData();
-          formData.append('url', directHeroUrl);
-          formData.append('caption', item.title.trim() || item.file.name);
+        // Step 2: Record in single source of truth (memories table)
+        const fd = new FormData();
+        fd.append('storage_path', publicUrl);
+        fd.append('thumbnail_path', thumbnailUrl);
+        fd.append('title', item.title.trim());
+        if (item.teluguTitle.trim()) fd.append('telugu_title', item.teluguTitle.trim());
+        fd.append('description', description.trim());
+        fd.append('festival_year_id', selectedYearId);
+        fd.append('category_id', selectedCategoryId);
+        fd.append('capture_date', captureDate);
+        fd.append('media_type', 'image');
+        fd.append('is_featured', isFeaturedInHero ? 'true' : 'false');
+        fd.append('is_published', 'true');
 
-          const res = await fetch('/api/admin/hero/upload', {
-            method: 'POST',
-            body: formData,
-          });
-
-          const data = await res.json();
-          if (!res.ok || data.error) {
-            throw new Error(data.error || 'Hero upload failed');
-          }
-        } else {
-          // Direct signed client storage upload for memories (photos & videos of ANY size)
-          const { uploadFileWithSignedUrl } = await import('@/lib/clientStorage');
-          const directStorageUrl = await uploadFileWithSignedUrl(item.file, 'festival-media', `${item.mediaType}s`);
-          let directThumbUrl: string | null = null;
-          if (item.thumbnailFile) {
-            directThumbUrl = await uploadFileWithSignedUrl(item.thumbnailFile, 'festival-media', 'thumbnails');
-          }
-
-          const formData = new FormData();
-          formData.append('storage_path', directStorageUrl);
-          if (directThumbUrl) {
-            formData.append('thumbnail_path', directThumbUrl);
-          }
-
-          formData.append('title', item.title.trim());
-          formData.append('description', description.trim());
-          formData.append('festival_year_id', selectedYearId);
-          formData.append('category_id', selectedCategoryId);
-          formData.append('capture_date', captureDate);
-          formData.append('media_type', item.mediaType);
-          formData.append('is_featured', isFeatured ? 'true' : 'false');
-          formData.append('is_published', 'true');
-
-          const res = await fetch('/api/admin/memories/upload', {
-            method: 'POST',
-            body: formData,
-          });
-
-          const data = await res.json();
-          if (!res.ok || data.error) {
-            throw new Error(data.error || 'Memory upload failed');
-          }
-        }
+        const res = await fetch('/api/admin/memories/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to save photo record');
 
         successCount++;
-        setBatchItems((prev) =>
-          prev.map((i) => (i.id === item.id ? { ...i, status: 'success' } : i))
-        );
+        setPhotoBatch((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'success' } : i)));
       } catch (err: any) {
         failCount++;
-        setBatchItems((prev) =>
-          prev.map((i) =>
-            i.id === item.id ? { ...i, status: 'error', errorMessage: err.message || 'Upload error' } : i
-          )
+        setPhotoBatch((prev) =>
+          prev.map((i) => (i.id === item.id ? { ...i, status: 'error', errorMessage: err.message || 'Upload error' } : i))
         );
       }
     }
@@ -248,321 +281,574 @@ export default function AdminUploadPage() {
     if (failCount === 0) {
       toast.success(
         'Upload Complete!',
-        `Successfully uploaded ${successCount} ${targetSection === 'memories' ? 'media memories' : 'hero slides'}.`
+        `Successfully uploaded ${successCount} photo(s) to Cloudflare R2${isFeaturedInHero ? ' and featured in Hero Carousel' : ''}.`
       );
       setTimeout(() => {
-        router.push(targetSection === 'memories' ? '/admin/memories' : '/admin/hero');
-      }, 1000);
+        router.push(isFeaturedInHero ? '/admin/hero' : '/admin/memories');
+      }, 1200);
     } else {
-      toast.error('Partial Upload Failure', `${successCount} items uploaded, ${failCount} failed.`);
+      toast.error('Partial Upload Failure', `${successCount} photos uploaded, ${failCount} failed.`);
     }
   };
 
-  const yearOptions: DropdownOption[] = years.map((y) => ({
-    value: y.id,
-    label: `${y.year} - ${y.title}`,
-  }));
+  // ── Execute YouTube Video Save ─────────────────────────────────────────────
+  const executeYouTubeUpload = async () => {
+    if (youtubeBatch.length === 0) {
+      setErrorMsg('Please add at least 1 YouTube video link.');
+      return;
+    }
 
-  const categoryOptions: DropdownOption[] = categories.map((c) => ({
-    value: c.id,
-    label: c.name,
-  }));
+    const invalidIdx = youtubeBatch.findIndex((i) => !i.videoId);
+    if (invalidIdx !== -1) {
+      setErrorMsg(`Video #${invalidIdx + 1} does not have a valid YouTube link.`);
+      return;
+    }
+
+    const emptyIdx = youtubeBatch.findIndex((i) => !i.title.trim());
+    if (emptyIdx !== -1) {
+      setErrorMsg(`Please enter a title for video #${emptyIdx + 1}.`);
+      return;
+    }
+
+    setUploading(true);
+    setErrorMsg(null);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const item of youtubeBatch) {
+      if (item.status === 'success') {
+        successCount++;
+        continue;
+      }
+
+      setYoutubeBatch((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i)));
+
+      try {
+        const fd = new FormData();
+        fd.append('youtube_url', item.youtubeUrl);
+        fd.append('title', item.title.trim());
+        if (item.teluguTitle.trim()) fd.append('telugu_title', item.teluguTitle.trim());
+        fd.append('description', description.trim());
+        fd.append('festival_year_id', selectedYearId);
+        fd.append('category_id', selectedCategoryId);
+        fd.append('capture_date', captureDate);
+        fd.append('media_type', 'video');
+        fd.append('is_featured', 'false');
+        fd.append('is_published', 'true');
+
+        const res = await fetch('/api/admin/memories/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to save YouTube record');
+
+        successCount++;
+        setYoutubeBatch((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'success' } : i)));
+      } catch (err: any) {
+        failCount++;
+        setYoutubeBatch((prev) =>
+          prev.map((i) => (i.id === item.id ? { ...i, status: 'error', errorMessage: err.message || 'Save error' } : i))
+        );
+      }
+    }
+
+    setUploading(false);
+
+    if (failCount === 0) {
+      toast.success('Videos Saved!', `Successfully linked ${successCount} YouTube video(s) to Media Library.`);
+      setTimeout(() => {
+        router.push('/admin/memories?filter=videos');
+      }, 1200);
+    } else {
+      toast.error('Partial Save Failure', `${successCount} videos saved, ${failCount} failed.`);
+    }
+  };
+
+  // Dropdown options
+  const yearOptions: DropdownOption[] = years.map((y) => ({ value: y.id, label: `${y.year} - ${y.title}` }));
+  const categoryOptions: DropdownOption[] = categories.map((c) => ({ value: c.id, label: c.name }));
+
+  const activeBatchCount = activeTab === 'photos' ? photoBatch.length : youtubeBatch.length;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 pb-24 md:pb-0">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
       <AdminHeader />
 
       <div className="flex-1 flex flex-col md:flex-row">
         <AdminSidebar />
 
-        <main className="flex-1 p-3.5 sm:p-6 lg:p-10 w-full max-w-full md:ml-72 min-h-[calc(100vh-64px)]">
-          {/* Top Header Row */}
-          <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-orange-200 gap-3">
-            <div className="flex items-center space-x-2 min-w-0">
-              <button
-                onClick={() => router.back()}
-                className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex-shrink-0"
-                title="Go Back"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <h1 className="font-editorial text-lg sm:text-2xl text-slate-900 font-bold truncate">
-                Upload Media Memories
-              </h1>
+        {/* FULL PAGE EXPANSIVE WORKSPACE */}
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-10 w-full max-w-full md:ml-72 min-h-[calc(100vh-64px)] flex flex-col pb-28 md:pb-8">
+          {/* Top Page Header Banner */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-orange-200 gap-2 sm:gap-4">
+            <div>
+              <div className="flex items-center space-x-3">
+                <h1 className="font-editorial text-2xl sm:text-4xl text-slate-900 font-bold tracking-tight">
+                  Media Upload Studio
+                </h1>
+                <span className="text-xs px-3 py-1 rounded-full bg-orange-100 text-orange-800 font-extrabold uppercase tracking-wider">
+                  Single Source of Truth
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl">
+                The centralized portal for all festival media. Photos upload to Cloudflare R2 (with optional Hero feature); videos stream via YouTube.
+              </p>
             </div>
-            <span className="text-[10px] sm:text-xs font-extrabold text-orange-800 bg-orange-100 px-2.5 py-1 rounded-full uppercase tracking-wider flex-shrink-0">
-              Batch Max 5 Files
-            </span>
+
+            <div className="flex items-center space-x-2 text-xs text-slate-500 font-semibold bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs">
+              <Layers className="w-4 h-4 text-orange-500" />
+              <span>Max {MAX_BATCH_SIZE} Files / Batch</span>
+            </div>
           </div>
 
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-8 shadow-sm space-y-6">
-            {/* Target Section Selection */}
-            <div>
-              <label className="text-xs font-extrabold text-orange-800 uppercase tracking-wider block mb-2">
-                1. Select Target Gallery Section
-              </label>
-              <div className="grid grid-cols-2 gap-3">
+          {/* TWO-COLUMN FULL PAGE LAYOUT */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start">
+            {/* LEFT COLUMN (lg:col-span-4): Metadata & Settings */}
+            <div className="lg:col-span-4 space-y-5">
+              {/* Type Switcher Pills */}
+              <div className="bg-white rounded-3xl border border-slate-200/90 p-2 shadow-xs grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setTargetSection('memories')}
-                  className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
-                    targetSection === 'memories'
-                      ? 'bg-orange-500 text-white border-orange-600 shadow-md scale-[1.01]'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-orange-300'
+                  onClick={() => {
+                    setActiveTab('photos');
+                    setErrorMsg(null);
+                  }}
+                  className={`py-3 px-4 rounded-2xl text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+                    activeTab === 'photos'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  <Images className="w-4 h-4" />
-                  <span>Media Gallery</span>
+                  <Camera className="w-4 h-4" />
+                  <span>📷 Photo Memory</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setTargetSection('hero')}
-                  className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
-                    targetSection === 'hero'
-                      ? 'bg-orange-500 text-white border-orange-600 shadow-md scale-[1.01]'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-orange-300'
+                  onClick={() => {
+                    setActiveTab('videos');
+                    setErrorMsg(null);
+                    if (youtubeBatch.length === 0) addYouTubeItem();
+                  }}
+                  className={`py-3 px-4 rounded-2xl text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+                    activeTab === 'videos'
+                      ? 'bg-red-600 text-white shadow-md'
+                      : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Hero Banner</span>
+                  <Youtube className="w-4 h-4" />
+                  <span>🎬 YouTube Video</span>
                 </button>
               </div>
-            </div>
 
-            {/* Target Section Settings */}
-            {targetSection === 'memories' && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-orange-50/60 border border-orange-200 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[11px] font-bold text-orange-800 uppercase tracking-wider block mb-1.5">
-                      Festival Year
-                    </label>
-                    <CustomDropdown
-                      options={yearOptions}
-                      value={selectedYearId}
-                      onChange={setSelectedYearId}
-                      lightMode={true}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-orange-800 uppercase tracking-wider block mb-1.5">
-                      Celebration Category
-                    </label>
-                    <CustomDropdown
-                      options={categoryOptions}
-                      value={selectedCategoryId}
-                      onChange={setSelectedCategoryId}
-                      lightMode={true}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div>
-                    <label className="text-[11px] font-bold text-orange-800 uppercase tracking-wider block mb-1.5">
-                      Capture Date
-                    </label>
-                    <input
-                      type="date"
-                      value={captureDate}
-                      onChange={(e) => setCaptureDate(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-orange-200 text-xs text-slate-900 font-semibold focus:outline-none focus:border-orange-500"
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-3 pt-6">
+              {/* Photos Only: Hero Banner Feature Switch Card */}
+              {activeTab === 'photos' && (
+                <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-amber-500/5 rounded-3xl border-2 border-amber-400/80 p-5 shadow-xs space-y-2">
+                  <div className="flex items-start space-x-3">
                     <input
                       type="checkbox"
-                      id="isFeaturedToggle"
-                      checked={isFeatured}
-                      onChange={(e) => setIsFeatured(e.target.checked)}
-                      className="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-orange-300"
+                      id="heroSwitch"
+                      checked={isFeaturedInHero}
+                      onChange={(e) => setIsFeaturedInHero(e.target.checked)}
+                      className="w-5 h-5 rounded text-orange-600 focus:ring-orange-500 border-amber-300 mt-0.5 cursor-pointer flex-shrink-0"
                     />
-                    <label htmlFor="isFeaturedToggle" className="text-xs font-bold text-slate-800 cursor-pointer select-none">
-                      Mark as Featured Highlight
-                    </label>
+                    <div>
+                      <label htmlFor="heroSwitch" className="text-sm font-bold text-slate-900 cursor-pointer flex items-center space-x-1.5">
+                        <Sparkles className="w-4 h-4 text-amber-600 fill-amber-600" />
+                        <span>Feature in Hero Carousel &amp; Gallery</span>
+                      </label>
+                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                        When switched on, this photo is featured as a full-screen rotating slide on the <strong>homepage hero banner</strong> AND also appears in the celebration chapters gallery timeline.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Multi-File Upload Picker Area */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-extrabold text-orange-800 uppercase tracking-wider">
-                  2. Choose Media Files ({batchItems.length}/{MAX_BATCH_SIZE})
-                </label>
-                {batchItems.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="text-xs text-rose-600 hover:text-rose-700 font-bold uppercase tracking-wider"
-                  >
-                    Clear All
-                  </button>
-                )}
-              </div>
+              {/* Shared Metadata Card */}
+              <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+                <h3 className="font-editorial text-base font-bold text-slate-900 border-b border-slate-100 pb-2">
+                  Celebration Attributes
+                </h3>
 
-              <input
-                type="file"
-                ref={fileInputRef}
-                multiple
-                accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime"
-                onChange={(e) => handleFilesSelected(e.target.files)}
-                className="hidden"
-              />
-
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="p-6 sm:p-8 rounded-2xl border-2 border-dashed border-orange-300 bg-orange-50/40 hover:bg-orange-50/80 hover:border-orange-500 transition-all text-center cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 mx-auto flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <Upload className="w-6 h-6" />
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                    Festival Year *
+                  </label>
+                  <CustomDropdown
+                    options={yearOptions}
+                    value={selectedYearId}
+                    onChange={setSelectedYearId}
+                    lightMode={true}
+                  />
                 </div>
-                <h4 className="text-sm font-bold text-slate-900">
-                  Tap to select up to 5 photos or videos
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                    Celebration Chapter Category *
+                  </label>
+                  <CustomDropdown
+                    options={categoryOptions}
+                    value={selectedCategoryId}
+                    onChange={setSelectedCategoryId}
+                    lightMode={true}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                    Capture Date
+                  </label>
+                  <input
+                    type="date"
+                    value={captureDate}
+                    onChange={(e) => setCaptureDate(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-semibold focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                    Batch Description / Notes
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Provide context or memories from this occasion..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+              </div>
+
+              {/* Infrastructure Guide Card */}
+              <div className="bg-slate-100/70 rounded-3xl p-5 text-xs text-slate-600 space-y-2 border border-slate-200">
+                <h4 className="font-bold text-slate-800 flex items-center space-x-1.5">
+                  <Info className="w-4 h-4 text-orange-600" />
+                  <span>Cloudflare R2 &amp; YouTube Architecture</span>
                 </h4>
-                <p className="text-xs text-slate-500 mt-1">
-                  JPG, PNG, WEBP, MP4, WEBM or MOV files allowed.
+                <p className="leading-relaxed text-[11px]">
+                  • <strong>Photos</strong> upload directly to Cloudflare R2 bucket <code className="bg-white px-1 py-0.5 rounded text-slate-800">lambodara-media</code>. Full HD, zero compression artifacts, zero egress costs.
+                </p>
+                <p className="leading-relaxed text-[11px]">
+                  • <strong>Videos</strong> stream via YouTube. We store only the clean video ID, giving high-performance streaming with zero video hosting charges.
                 </p>
               </div>
             </div>
 
-            {/* Error Banner */}
-            {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
+            {/* RIGHT COLUMN (lg:col-span-8): Media Canvas */}
+            <div className="lg:col-span-8 space-y-5">
+              {/* TAB 1: Photos Workspace */}
+              {activeTab === 'photos' && (
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-xs space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                      <h3 className="font-editorial text-lg sm:text-xl font-bold text-slate-900">
+                        Photo Memory Dropzone
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Upload up to {MAX_BATCH_SIZE} photos simultaneously. JPG, PNG, WebP, AVIF accepted.
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
+                      {photoBatch.length} / {MAX_BATCH_SIZE} Selected
+                    </span>
+                  </div>
 
-            {/* Selected Queue Items List */}
-            {batchItems.length > 0 && (
-              <div className="space-y-3">
-                <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block">
-                  Selected Files Queue ({batchItems.length})
-                </label>
-
-                {batchItems.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3"
-                  >
-                    <div className="flex items-center space-x-3">
-                      {/* Media Preview */}
-                      <div className="relative w-16 h-14 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0">
-                        {item.mediaType === 'video' ? (
-                          <video src={item.previewUrl} className="w-full h-full object-cover" />
-                        ) : (
-                          <SafeMediaImage
-                            src={item.previewUrl}
-                            alt={item.title}
-                            fill
-                            className="object-cover"
-                            sizes="80px"
-                          />
-                        )}
-                        <span className="absolute top-1 left-1 px-1 py-0.2 bg-black/75 text-[8px] font-extrabold text-white uppercase rounded">
-                          {item.mediaType === 'video' ? 'FILM' : 'PHOTO'}
-                        </span>
+                  {/* Large Expansive Dropzone */}
+                  {photoBatch.length < MAX_BATCH_SIZE && (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-3 border-dashed border-blue-200 hover:border-blue-500 rounded-3xl p-10 sm:p-14 text-center cursor-pointer transition-all bg-blue-50/20 hover:bg-blue-50/50 group"
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp,image/avif"
+                        className="hidden"
+                        onChange={(e) => {
+                          handleFilesSelected(e.target.files);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                      />
+                      <div className="w-16 h-16 rounded-3xl bg-blue-100 text-blue-600 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-xs">
+                        <Upload className="w-8 h-8" />
                       </div>
+                      <h4 className="text-base sm:text-lg font-bold text-slate-900">
+                        Drag and drop photos here, or browse files
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
+                        Photos are securely transferred directly to Cloudflare R2 storage. No size limits, crystal-clear quality.
+                      </p>
+                    </div>
+                  )}
 
-                      {/* Title & Metadata Inputs */}
-                      <div className="min-w-0 flex-1 space-y-1.5">
+                  {/* Photo Batch Item Cards */}
+                  {photoBatch.length > 0 && (
+                    <div className="space-y-3.5">
+                      <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                        Selected Photos ({photoBatch.length})
+                      </h4>
+                      {photoBatch.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-blue-300 transition-all flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-2xs"
+                        >
+                          {/* Thumbnail */}
+                          <div className="relative w-24 h-20 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0 border border-slate-200">
+                            <img src={item.previewUrl} alt={item.title} className="w-full h-full object-cover" />
+                            <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-[9px] font-bold text-white">
+                              {item.sizeFormatted}
+                            </span>
+                            <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-blue-600 text-[9px] font-extrabold text-white">
+                              #{idx + 1}
+                            </span>
+                          </div>
+
+                          {/* Title Inputs */}
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                                Title (English) *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={item.title}
+                                onChange={(e) => updatePhotoTitle(item.id, e.target.value)}
+                                placeholder="Lord Vinayaka Pandal Aarti..."
+                                disabled={uploading}
+                                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                                Title (Telugu Optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={item.teluguTitle}
+                                onChange={(e) => updatePhotoTeluguTitle(item.id, e.target.value)}
+                                placeholder="శ్రీ వినాయక పూజ..."
+                                disabled={uploading}
+                                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-500"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Status / Delete */}
+                          <div className="flex items-center space-x-2 flex-shrink-0 self-end sm:self-center">
+                            {item.status === 'uploading' && (
+                              <div className="flex items-center space-x-1.5 text-blue-600 text-xs font-bold">
+                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                <span>Uploading...</span>
+                              </div>
+                            )}
+                            {item.status === 'success' && (
+                              <div className="flex items-center space-x-1 text-emerald-600 text-xs font-bold">
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>Saved</span>
+                              </div>
+                            )}
+                            {item.status === 'error' && (
+                              <div className="flex items-center space-x-1 text-rose-600 text-xs font-bold" title={item.errorMessage}>
+                                <AlertCircle className="w-4 h-4" />
+                                <span>Failed</span>
+                              </div>
+                            )}
+                            {!uploading && item.status !== 'success' && (
+                              <button
+                                type="button"
+                                onClick={() => removePhotoItem(item.id)}
+                                className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                title="Remove photo"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: YouTube Videos Workspace */}
+              {activeTab === 'videos' && (
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-xs space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                      <h3 className="font-editorial text-lg sm:text-xl font-bold text-slate-900">
+                        YouTube Video Memory Hub
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Add video links for instant zero-lag streaming. Free CDN hosting directly from YouTube.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addYouTubeItem}
+                      disabled={youtubeBatch.length >= MAX_BATCH_SIZE || uploading}
+                      className="inline-flex items-center space-x-1 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full cursor-pointer disabled:opacity-50"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Another Video</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {youtubeBatch.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-red-300 transition-all space-y-3.5 shadow-2xs"
+                      >
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-orange-600 uppercase">
-                            #{idx + 1} &bull; {item.generatedId}
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center space-x-1.5">
+                            <Play className="w-3.5 h-3.5 text-red-600 fill-red-600" />
+                            <span>Video #{idx + 1}</span>
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => removeBatchItem(item.id)}
-                            className="text-rose-600 hover:text-rose-700 p-1"
-                            title="Remove File"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {youtubeBatch.length > 1 && !uploading && (
+                            <button
+                              type="button"
+                              onClick={() => removeYouTubeItem(item.id)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
+                              title="Remove"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
 
-                        <input
-                          type="text"
-                          value={item.title}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setBatchItems((prev) =>
-                              prev.map((i) => (i.id === item.id ? { ...i, title: val } : i))
-                            );
-                          }}
-                          placeholder="Enter Media Title..."
-                          className="w-full px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Video Poster Thumbnail Upload (If Video File) */}
-                    {item.mediaType === 'video' && targetSection === 'memories' && (
-                      <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs">
-                        <span className="text-[11px] font-bold text-slate-700">Video Poster Thumbnail:</span>
-                        <label className="px-3 py-1 rounded-xl bg-orange-100 text-orange-700 text-[10px] font-bold uppercase cursor-pointer hover:bg-orange-200">
-                          {item.thumbnailFile ? 'Thumbnail Selected' : 'Choose Thumbnail Image'}
+                        {/* YouTube URL Input */}
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                            YouTube Video Link or Shorts URL *
+                          </label>
                           <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            onChange={(e) => {
-                              const thumbFile = e.target.files?.[0];
-                              if (thumbFile) {
-                                setBatchItems((prev) =>
-                                  prev.map((i) =>
-                                    i.id === item.id
-                                      ? {
-                                          ...i,
-                                          thumbnailFile: thumbFile,
-                                          thumbnailPreviewUrl: URL.createObjectURL(thumbFile),
-                                        }
-                                      : i
-                                  )
-                                );
-                              }
-                            }}
-                            className="hidden"
+                            type="text"
+                            required
+                            value={item.youtubeUrl}
+                            onChange={(e) => updateYouTubeUrl(item.id, e.target.value)}
+                            placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                            disabled={uploading}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-mono text-slate-900 focus:outline-none focus:border-red-500"
                           />
-                        </label>
+                        </div>
+
+                        {/* Live Facade Thumbnail Preview */}
+                        {item.videoId ? (
+                          <div className="flex items-center space-x-3.5 p-3 rounded-xl bg-red-50/70 border border-red-200">
+                            <div className="relative w-28 h-18 rounded-lg overflow-hidden bg-black flex-shrink-0">
+                              <img
+                                src={item.thumbnailUrl || ''}
+                                alt="YouTube Thumbnail"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shadow-md">
+                                  <Play className="w-3.5 h-3.5 fill-white ml-0.5" />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-red-700 block">
+                                Verified Video ID: {item.videoId}
+                              </span>
+                              <span className="text-xs text-slate-700 font-medium truncate block mt-0.5">
+                                Real-time high resolution cover thumbnail loaded from YouTube CDN.
+                              </span>
+                            </div>
+                          </div>
+                        ) : item.youtubeUrl ? (
+                          <p className="text-xs text-amber-700 font-medium">
+                            ⚠️ Enter a valid YouTube video URL (watch link, youtu.be, or shorts).
+                          </p>
+                        ) : null}
+
+                        {/* Video Title Inputs */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                              Title (English) *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={item.title}
+                              onChange={(e) => updateYouTubeTitle(item.id, e.target.value)}
+                              placeholder="Evening Pandal Aarti & Devotion..."
+                              disabled={uploading}
+                              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:border-red-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                              Title (Telugu Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={item.teluguTitle}
+                              onChange={(e) => updateYouTubeTeluguTitle(item.id, e.target.value)}
+                              placeholder="సాయంత్రం హారతి..."
+                              disabled={uploading}
+                              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:border-red-500"
+                            />
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                </div>
+              )}
+
+              {/* Error Callout */}
+              {errorMsg && (
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center space-x-2">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              {/* Action Submit Bar */}
+              <div className="bg-white rounded-3xl border border-slate-200 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+                <div className="text-xs text-slate-500 font-medium">
+                  {activeTab === 'photos' ? (
+                    <span>
+                      Ready to upload {photoBatch.length} photo(s) to Cloudflare R2
+                      {isFeaturedInHero ? ' (featured in Hero Carousel & Gallery)' : ' (Gallery)'}
+                    </span>
+                  ) : (
+                    <span>Ready to save {youtubeBatch.length} YouTube video link(s) to Media Library</span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={activeTab === 'photos' ? executePhotoUpload : executeYouTubeUpload}
+                  disabled={uploading || activeBatchCount === 0}
+                  className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2.5 cursor-pointer disabled:opacity-50 ${
+                    activeTab === 'photos'
+                      ? 'bg-blue-600 hover:bg-blue-500'
+                      : 'bg-red-600 hover:bg-red-500'
+                  }`}
+                >
+                  {uploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Processing {activeBatchCount} item(s)...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 text-white" />
+                      <span>
+                        {activeTab === 'photos'
+                          ? `Upload ${activeBatchCount} Photo(s) to Cloudflare R2`
+                          : `Save ${activeBatchCount} Video(s) to Library`}
+                      </span>
+                    </>
+                  )}
+                </button>
               </div>
-            )}
-
-            {/* Submit Action Buttons */}
-            <div className="pt-4 border-t border-slate-200 flex items-center justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-5 py-2.5 rounded-full border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                disabled={uploading || batchItems.length === 0}
-                onClick={executeUpload}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-saffron-600 hover:from-orange-600 hover:to-saffron-700 text-white text-xs font-extrabold uppercase tracking-wider shadow-md disabled:opacity-50 flex items-center space-x-2 active:scale-95 transition-all"
-              >
-                {uploading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Uploading Batch...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    <span>Upload {batchItems.length > 0 ? `(${batchItems.length})` : ''} Files</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </main>
@@ -570,5 +856,19 @@ export default function AdminUploadPage() {
 
       <AdminMobileBottomBar />
     </div>
+  );
+}
+
+export default function AdminUploadPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }
+    >
+      <UploadContent />
+    </Suspense>
   );
 }

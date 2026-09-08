@@ -33,10 +33,15 @@ export default function MemoryViewerModal({
   const [likedMemories, setLikedMemories] = useState<Record<string, boolean>>({});
   const [blessingCounts, setBlessingCounts] = useState<Record<string, number>>({});
   const touchStartX = useRef<number | null>(null);
+  const lastNavTime = useRef<number>(0);
 
   const currentMemory = selectedIndex !== null ? memories[selectedIndex] : null;
 
   const handlePrev = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavTime.current < 120) return;
+    lastNavTime.current = now;
+
     if (selectedIndex !== null && selectedIndex > 0) {
       onNavigate(selectedIndex - 1);
     } else if (selectedIndex === 0 && memories.length > 0) {
@@ -45,6 +50,10 @@ export default function MemoryViewerModal({
   }, [selectedIndex, memories.length, onNavigate]);
 
   const handleNext = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavTime.current < 120) return;
+    lastNavTime.current = now;
+
     if (selectedIndex !== null && selectedIndex < memories.length - 1) {
       onNavigate(selectedIndex + 1);
     } else if (selectedIndex === memories.length - 1 && memories.length > 0) {
@@ -76,6 +85,57 @@ export default function MemoryViewerModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedIndex, onClose, handlePrev, handleNext]);
+
+  // Lock background screen scrolling when modal is open
+  useEffect(() => {
+    if (selectedIndex === null) return;
+
+    const scrollY = window.scrollY;
+    const originalOverflow = document.body.style.overflow;
+    const originalPosition = document.body.style.position;
+    const originalTop = document.body.style.top;
+    const originalWidth = document.body.style.width;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalOverflow;
+      document.body.style.position = originalPosition;
+      document.body.style.top = originalTop;
+      document.body.style.width = originalWidth;
+      window.scrollTo(0, scrollY);
+    };
+  }, [selectedIndex]);
+
+  // Smart background preloading of adjacent images in gallery
+  useEffect(() => {
+    if (selectedIndex === null || memories.length <= 1) return;
+
+    const nextIdx = selectedIndex < memories.length - 1 ? selectedIndex + 1 : 0;
+    const prevIdx = selectedIndex > 0 ? selectedIndex - 1 : memories.length - 1;
+
+    const preloadImage = (url?: string | null) => {
+      if (!url || typeof window === 'undefined') return;
+      const img = new window.Image();
+      img.decoding = 'async';
+      img.src = url;
+    };
+
+    const nextMem = memories[nextIdx];
+    if (nextMem && nextMem.media_type === 'image') {
+      preloadImage(nextMem.full_path || nextMem.storage_path);
+    }
+    const prevMem = memories[prevIdx];
+    if (prevMem && prevMem.media_type === 'image') {
+      preloadImage(prevMem.full_path || prevMem.storage_path);
+    }
+  }, [selectedIndex, memories]);
 
   useEffect(() => {
     // Load local device blessings
@@ -236,14 +296,14 @@ export default function MemoryViewerModal({
       aria-modal="true"
       role="dialog"
       aria-label={currentMemory.title}
-      className="fixed inset-0 z-50 flex flex-col bg-charcoal-950/98 backdrop-blur-xl overflow-y-auto animate-fade-in text-ivory-50"
+      className="fixed inset-0 z-50 flex flex-col bg-[#0a0807] overflow-y-auto overscroll-contain animate-fade-in text-ivory-50"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* YouTube Style Header Bar — Full Screen Width */}
-      <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-3.5 bg-charcoal-900/95 border-b border-gold-500/20 backdrop-blur-md shadow-lg">
-        <div className="flex items-center space-x-3 min-w-0">
-          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-gold-500/20 p-0.5 border border-gold-400/60 shadow-md">
+      {/* Top Header Bar — Fixed & Sticky with Safe Area Inset */}
+      <header className="sticky top-0 z-40 flex items-center justify-between px-3.5 sm:px-6 md:px-8 py-2.5 sm:py-3.5 bg-[#0e0c0a]/95 border-b border-gold-500/20 backdrop-blur-md shadow-lg pt-[max(0.625rem,env(safe-area-inset-top))]">
+        <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink-0 bg-gold-500/20 p-0.5 border border-gold-400/60 shadow-md">
             <img
               src="/images/village_logo_icon.png"
               alt="Emblem"
@@ -251,10 +311,10 @@ export default function MemoryViewerModal({
             />
           </div>
           <div className="min-w-0 flex flex-col">
-            <span className="font-editorial text-base font-bold tracking-wide text-ivory-50 truncate">
+            <span className="font-editorial text-sm sm:text-base font-bold tracking-wide text-ivory-50 truncate">
               {associationName}
             </span>
-            <span className="text-[11px] text-gold-400 font-sans tracking-widest uppercase font-semibold truncate">
+            <span className="text-[10px] sm:text-[11px] text-gold-400 font-sans tracking-widest uppercase font-semibold truncate">
               {selectedIndex + 1} of {memories.length} &bull; {currentMemory.media_type === 'video' ? 'Film' : 'Photo'}
             </span>
           </div>
@@ -264,50 +324,68 @@ export default function MemoryViewerModal({
         <button
           onClick={onClose}
           aria-label="Close Lightbox"
-          className="p-2.5 rounded-full bg-charcoal-850 border border-gold-500/30 text-ivory-100 hover:text-charcoal-950 hover:bg-gold-400 hover:border-gold-400 transition-all shadow-md active:scale-95 flex items-center justify-center focus:outline-none"
+          className="p-2 sm:p-2.5 rounded-full bg-charcoal-800/90 border border-gold-500/30 text-ivory-100 hover:text-charcoal-950 hover:bg-gold-400 hover:border-gold-400 transition-all shadow-md active:scale-95 flex items-center justify-center focus:outline-none flex-shrink-0 cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </header>
 
       {/* Main YouTube Layout Container — Full Width Horizontally */}
-      <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-4 sm:py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start flex-1">
+      <main className="w-full max-w-[1920px] mx-auto px-3.5 sm:px-6 md:px-8 lg:px-10 py-3.5 sm:py-6 flex flex-col lg:flex-row gap-5 lg:gap-8 items-start flex-1">
         {/* Left Primary Column: Media Player + Title + Association Info + Action Pills + Description */}
         <div className="w-full lg:flex-1 flex flex-col min-w-0">
           {/* Main Media Player Box */}
-          <div className="relative w-full h-[45vh] sm:h-[60vh] lg:h-[66vh] xl:h-[72vh] rounded-xl sm:rounded-2xl overflow-hidden bg-black border border-gold-500/30 shadow-2xl shadow-gold-500/5 flex items-center justify-center">
-            {currentMemory.media_type === 'video' ? (
-              <video
-                src={currentMemory.storage_path}
-                controls
-                autoPlay
-                playsInline
-                preload="auto"
-                className="w-full h-full object-contain max-h-[72vh]"
-                poster={currentMemory.thumbnail_path || undefined}
-              />
-            ) : (
-              <Image
-                src={currentMemory.storage_path}
-                alt={currentMemory.title}
-                fill
-                priority
-                className="object-contain"
-                sizes="(max-width: 1024px) 100vw, 75vw"
-              />
-            )}
+          <div className="relative w-full h-[46vh] sm:h-[58vh] lg:h-[66vh] xl:h-[72vh] rounded-2xl overflow-hidden bg-black border border-gold-500/30 shadow-2xl shadow-gold-500/5 flex items-center justify-center">
+            {(() => {
+              const mediaInfo = getMediaDisplayInfo(currentMemory);
+              if (mediaInfo.isYouTube && mediaInfo.youtubeVideoId) {
+                return (
+                  <iframe
+                    key={mediaInfo.youtubeVideoId}
+                    src={`https://www.youtube-nocookie.com/embed/${mediaInfo.youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                    title={currentMemory.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    className="w-full h-full"
+                    style={{ border: 'none' }}
+                  />
+                );
+              }
+              if (currentMemory.media_type === 'video') {
+                return (
+                  <video
+                    src={currentMemory.storage_path}
+                    controls
+                    autoPlay
+                    playsInline
+                    preload="auto"
+                    className="w-full h-full object-contain max-h-[72vh]"
+                    poster={currentMemory.thumbnail_path || undefined}
+                  />
+                );
+              }
+              return (
+                <Image
+                  src={currentMemory.full_path || currentMemory.storage_path}
+                  alt={currentMemory.title}
+                  fill
+                  priority
+                  className="object-contain"
+                  sizes="(max-width: 1024px) 100vw, 75vw"
+                />
+              );
+            })()}
           </div>
 
           {/* High-Visibility Title */}
-          <h1 className="font-editorial text-xl sm:text-3xl font-bold text-ivory-50 mt-4 leading-tight tracking-wide">
+          <h1 className="font-editorial text-xl sm:text-2xl lg:text-3xl font-bold text-ivory-50 mt-3.5 sm:mt-4 leading-snug tracking-wide">
             {currentMemory.title}
           </h1>
 
-          {/* Channel Info & YouTube Icon Action Bar Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-3.5 pb-4 border-b border-charcoal-800">
-            {/* Left: Association Info */}
-            <div className="flex items-center space-x-3.5">
-              <div className="w-11 h-11 rounded-full bg-saffron-600/20 border-2 border-gold-400/60 p-1 flex-shrink-0 flex items-center justify-center shadow-md">
+          {/* Channel / Association Info Row */}
+          <div className="flex items-center justify-between gap-3 mt-3 pb-3 border-b border-charcoal-800">
+            <div className="flex items-center space-x-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-saffron-600/20 border-2 border-gold-400/60 p-0.5 flex-shrink-0 flex items-center justify-center shadow-md">
                 <img
                   src="/images/village_logo_icon.png"
                   alt="Emblem"
@@ -315,32 +393,41 @@ export default function MemoryViewerModal({
                 />
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-sm font-extrabold text-ivory-50 tracking-wide truncate">
+                <span className="text-xs sm:text-sm font-extrabold text-ivory-50 tracking-wide truncate">
                   {associationName}
                 </span>
-                <span className="text-xs text-gold-400 font-sans font-medium truncate">
+                <span className="text-[11px] sm:text-xs text-gold-400 font-sans font-medium truncate">
                   {villageName} &bull; {currentMemory.capture_date || 'Vinayaka Chavithi 2026'}
                 </span>
               </div>
             </div>
 
-            {/* Right: Icon Action Pills (Vivid High-Visibility Styling) */}
-            <div className="flex items-center space-x-2.5 overflow-x-auto no-scrollbar py-1">
+            {currentMemory.category && (
+              <span className="px-2.5 py-1 rounded-full bg-saffron-600/20 border border-saffron-400/40 text-gold-300 text-[10px] sm:text-xs font-bold uppercase tracking-wider font-sans flex-shrink-0">
+                {currentMemory.category.name}
+              </span>
+            )}
+          </div>
+
+          {/* Action Pills Row: Well Balanced, Aligned Layout */}
+          <div className="flex items-center justify-between gap-2.5 mt-3 pb-3.5 border-b border-charcoal-800/80">
+            {/* Left: Bless & Share actions */}
+            <div className="flex items-center space-x-2 flex-1 sm:flex-initial">
               {/* Like / Devotional Blessing Icon Button */}
               {(() => {
                 const bCount = blessingCounts[currentMemory.id] ?? currentMemory.blessing_count ?? 0;
                 return (
                   <button
                     onClick={() => toggleLike(currentMemory.id)}
-                    className={`px-4 py-2 rounded-full border text-xs font-bold flex items-center space-x-2 transition-all shadow-md active:scale-95 cursor-pointer ${
+                    className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full border text-xs font-bold flex items-center justify-center space-x-1.5 sm:space-x-2 transition-all shadow-md active:scale-95 cursor-pointer ${
                       isLiked
                         ? 'bg-saffron-600/30 border-saffron-400 text-saffron-200 shadow-glow-saffron'
                         : 'bg-charcoal-850 border-gold-500/30 text-ivory-100 hover:border-gold-400 hover:text-gold-300'
                     }`}
                     title="Devotional Blessing"
                   >
-                    <Heart className={`w-4 h-4 ${isLiked ? 'fill-saffron-400 text-saffron-400' : 'text-gold-400'}`} />
-                    <span>{isLiked ? `Blessed (${bCount})` : bCount > 0 ? `Bless (${bCount})` : 'Bless'}</span>
+                    <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? 'fill-saffron-400 text-saffron-400' : 'text-gold-400'}`} />
+                    <span className="truncate">{isLiked ? `Blessed (${bCount})` : bCount > 0 ? `Bless (${bCount})` : 'Bless'}</span>
                   </button>
                 );
               })()}
@@ -348,45 +435,37 @@ export default function MemoryViewerModal({
               {/* Share Icon Button */}
               <button
                 onClick={handleShare}
-                className="px-4 py-2 rounded-full bg-charcoal-850 border border-gold-500/30 text-xs font-bold text-ivory-100 hover:text-gold-300 hover:border-gold-400 flex items-center space-x-2 transition-all shadow-md active:scale-95"
+                className="flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-charcoal-850 border border-gold-500/30 text-xs font-bold text-ivory-100 hover:text-gold-300 hover:border-gold-400 flex items-center justify-center space-x-1.5 sm:space-x-2 transition-all shadow-md active:scale-95 cursor-pointer"
                 title="Share Memory"
               >
-                {copied ? <Check className="w-4 h-4 text-gold-400" /> : <Share2 className="w-4 h-4 text-gold-400" />}
+                {copied ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-400" /> : <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-400" />}
                 <span>{copied ? 'Copied' : 'Share'}</span>
               </button>
+            </div>
 
-              {/* Prev / Next Navigation Icon Buttons */}
-              <div className="flex items-center space-x-1.5 pl-1.5 border-l border-charcoal-800">
-                <button
-                  onClick={handlePrev}
-                  title="Previous Memory"
-                  className="p-2.5 rounded-full bg-charcoal-850 border border-gold-500/30 text-ivory-100 hover:text-gold-400 hover:border-gold-400 transition-all shadow-md active:scale-95"
-                >
-                  <ChevronLeft className="w-4.5 h-4.5" />
-                </button>
-                <button
-                  onClick={handleNext}
-                  title="Next Memory"
-                  className="p-2.5 rounded-full bg-charcoal-850 border border-gold-500/30 text-ivory-100 hover:text-gold-400 hover:border-gold-400 transition-all shadow-md active:scale-95"
-                >
-                  <ChevronRight className="w-4.5 h-4.5" />
-                </button>
-              </div>
+            {/* Right: Prev / Next Navigation Arrows */}
+            <div className="flex items-center space-x-1.5 flex-shrink-0">
+              <button
+                onClick={handlePrev}
+                title="Previous Memory"
+                aria-label="Previous Memory"
+                className="p-2 sm:p-2.5 rounded-full bg-charcoal-850 border border-gold-500/30 text-ivory-100 hover:text-gold-400 hover:border-gold-400 transition-all shadow-md active:scale-95 flex items-center justify-center cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleNext}
+                title="Next Memory"
+                aria-label="Next Memory"
+                className="p-2 sm:p-2.5 rounded-full bg-charcoal-850 border border-gold-500/30 text-ivory-100 hover:text-gold-400 hover:border-gold-400 transition-all shadow-md active:scale-95 flex items-center justify-center cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
           {/* Description Box (High-Visibility Rich Card) */}
-          <div className="bg-charcoal-900/95 rounded-2xl p-4 sm:p-5 border border-gold-500/25 text-xs sm:text-sm text-ivory-100 leading-relaxed mt-4 shadow-xl">
-            <div className="flex items-center space-x-2.5 mb-2.5">
-              {currentMemory.category && (
-                <span className="px-3 py-1 rounded-full bg-saffron-600/20 border border-saffron-400/50 text-gold-300 text-xs font-bold uppercase tracking-wider font-sans shadow-sm">
-                  {currentMemory.category.name}
-                </span>
-              )}
-              <span className="text-xs text-ivory-300 font-sans font-semibold">
-                {currentMemory.capture_date || 'Vinayaka Chavithi'}
-              </span>
-            </div>
+          <div className="bg-charcoal-900/90 rounded-2xl p-3.5 sm:p-5 border border-gold-500/25 text-xs sm:text-sm text-ivory-100 leading-relaxed mt-3 shadow-xl">
             <p className="font-sans text-ivory-200 text-xs sm:text-sm font-medium leading-relaxed">
               {currentMemory.description || 'Sacred festival memory preserved in the official digital gallery.'}
             </p>
@@ -394,7 +473,7 @@ export default function MemoryViewerModal({
 
           {/* Mobile-only: Horizontal thumbnail strip for navigation (replaces the sidebar) */}
           {memories.length > 1 && (
-            <div className="lg:hidden mt-4">
+            <div className="lg:hidden mt-4 pb-12">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-gold-400">
                   {memories.length} Memories · Swipe or tap to navigate
@@ -412,12 +491,12 @@ export default function MemoryViewerModal({
                       onClick={() => onNavigate(idx)}
                       className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all active:scale-95 ${
                         isCurrent
-                          ? 'border-gold-400 shadow-glow-gold'
+                          ? 'border-gold-400 shadow-glow-gold ring-1 ring-gold-400'
                           : 'border-charcoal-700 opacity-60'
                       }`}
                     >
                       <SafeMediaImage
-                        src={mediaInfo.url}
+                        src={mediaInfo.thumbnailUrl || mediaInfo.poster || mediaInfo.url}
                         poster={mediaInfo.poster}
                         alt={mem.title}
                         fill
@@ -425,8 +504,8 @@ export default function MemoryViewerModal({
                         sizes="64px"
                       />
                       {isVid && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Play className="w-3 h-3 fill-white text-white drop-shadow-md" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <Play className="w-3.5 h-3.5 fill-white text-white drop-shadow-md" />
                         </div>
                       )}
                     </button>
@@ -467,7 +546,7 @@ export default function MemoryViewerModal({
                   {/* Thumbnail Box */}
                   <div className="relative w-28 h-16 rounded-lg overflow-hidden bg-charcoal-950 flex-shrink-0 border border-gold-500/30 shadow-md">
                     <SafeMediaImage
-                      src={mediaInfo.url}
+                      src={mediaInfo.isYouTube ? (mediaInfo.poster || mediaInfo.url) : mediaInfo.url}
                       poster={mediaInfo.poster}
                       alt={mem.title}
                       fill

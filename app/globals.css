@@ -109,3 +109,15 @@ h1, h2, h3, h4, h5, h6, p, button, a, span, div, input, label, textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* GPU-Accelerated Layer Promotion for 60fps Smooth Transitions */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Modal and Lightbox Smooth Display */
+[role="dialog"] {
+  will-change: opacity, transform;
+}
+

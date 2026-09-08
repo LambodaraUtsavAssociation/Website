@@ -22,6 +22,7 @@ interface CustomDropdownProps {
   placeholder?: string;
   variant?: 'default' | 'iconOnly';
   className?: string;
+  buttonClassName?: string;
   lightMode?: boolean;
 }
 
@@ -34,6 +35,7 @@ export default function CustomDropdown({
   placeholder = 'Select Option',
   variant = 'default',
   className = '',
+  buttonClassName = '',
   lightMode = false,
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -72,7 +74,7 @@ export default function CustomDropdown({
             lightMode
               ? 'bg-white border-2 border-orange-200 text-orange-600 hover:bg-orange-50 shadow-xs'
               : 'bg-charcoal-900/90 hover:bg-gold-500/20 text-gold-400 hover:text-gold-300 shadow-2xl'
-          }`}
+          } ${buttonClassName}`}
         >
           {icon || <Filter className={`w-5 h-5 group-hover:scale-110 transition-transform ${lightMode ? 'text-orange-500' : 'text-gold-400'}`} />}
           {value !== 'all' && (
@@ -83,11 +85,11 @@ export default function CustomDropdown({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-left flex items-center justify-between focus:outline-none transition-all cursor-pointer group ${
+          className={`w-full h-10 rounded-xl px-3.5 text-xs font-bold uppercase tracking-wider text-left flex items-center justify-between focus:outline-none transition-all cursor-pointer group ${
             lightMode
               ? 'bg-white border-2 border-orange-200 hover:border-orange-500 text-slate-900 shadow-xs'
               : 'bg-charcoal-900 border border-charcoal-700 hover:border-gold-500/50 text-ivory-100 shadow-lg'
-          }`}
+          } ${buttonClassName}`}
         >
           <div className="flex items-center space-x-2.5 min-w-0 pr-2">
             <div className={`p-1.5 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform ${lightMode ? 'bg-orange-100 text-orange-600' : 'bg-gold-500/10 border border-gold-500/20 text-gold-400'}`}>

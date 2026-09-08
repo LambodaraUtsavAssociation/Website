@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminSession } from '@/lib/auth';
-import { updateFestivalYear, deleteFestivalYear } from '@/lib/data/repository';
+import { updateFestivalYear, deleteFestivalYear, getFestivalYearById } from '@/lib/data/repository';
+import { deleteR2Object } from '@/lib/r2';
 import { logAuditEvent } from '@/lib/telemetry';
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
@@ -12,6 +13,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   try {
     const updates = await request.json();
+
+    // If cover image is being updated/replaced, clean up old Cloudflare R2 object to prevent duplicate files
+    if (updates.cover_image_url !== undefined) {
+      const existingYear = await getFestivalYearById(params.id);
+      if (
+        existingYear?.cover_image_url &&
+        updates.cover_image_url !== existingYear.cover_image_url
+      ) {
+        await deleteR2Object(existingYear.cover_image_url).catch((err) => {
+          console.warn('Failed to delete old festival cover from R2:', err);
+        });
+      }
+    }
+
     const updated = await updateFestivalYear(params.id, updates);
 
     logAuditEvent({
@@ -23,6 +38,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     });
 
     revalidatePath('/', 'layout');
+    revalidatePath('/admin/years');
 
     return NextResponse.json({ success: true, year: updated });
   } catch (err: any) {
@@ -37,6 +53,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
 
   try {
+    const existingYear = await getFestivalYearById(params.id);
+    if (existingYear?.cover_image_url) {
+      await deleteR2Object(existingYear.cover_image_url).catch(() => null);
+    }
+
     await deleteFestivalYear(params.id);
 
     logAuditEvent({
@@ -47,6 +68,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     });
 
     revalidatePath('/', 'layout');
+    revalidatePath('/admin/years');
 
     return NextResponse.json({ success: true, message: 'Festival year deleted' });
   } catch (err: any) {

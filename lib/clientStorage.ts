@@ -109,3 +109,66 @@ export async function uploadFileToSupabaseStorage(
     return null;
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLOUDFLARE R2 — Direct browser-to-R2 upload via presigned PUT URL
+// Same pattern as the Supabase signed URL approach above.
+// R2 is S3-compatible → zero egress fees, 10 GB free storage/month.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface R2UploadResult {
+  /** Full public R2 URL */
+  publicUrl: string;
+  /** Same URL — R2 doesn't do server-side transformations; use Next.js Image for resizing */
+  thumbnailUrl: string;
+}
+
+/**
+ * Uploads an image directly from the browser to Cloudflare R2 using a presigned PUT URL.
+ *
+ * Flow:
+ *  1. Requests a presigned PUT URL from /api/admin/r2/upload-url (lightweight server call)
+ *  2. PUTs the image directly to R2 from the browser (bypasses Vercel entirely)
+ *
+ * @param file   - The image File object to upload
+ * @param folder - R2 subfolder (e.g., 'photos', 'hero-media')
+ * @returns Public R2 URL (both publicUrl and thumbnailUrl point to the same file)
+ */
+export async function uploadImageToR2(
+  file: File,
+  folder = 'photos'
+): Promise<R2UploadResult> {
+  // Step 1: Get presigned PUT URL + final public URL from our API route
+  const paramRes = await fetch('/api/admin/r2/upload-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      folder,
+      fileName: file.name,
+      contentType: file.type || 'application/octet-stream',
+    }),
+  });
+
+  const paramData = await paramRes.json();
+  if (!paramRes.ok || !paramData.presignedUrl) {
+    throw new Error(paramData.error || 'Failed to get R2 presigned upload URL');
+  }
+
+  const { presignedUrl, publicUrl } = paramData;
+
+  // Step 2: PUT the file directly to R2 — bypasses Vercel, no size limit
+  const uploadRes = await fetch(presignedUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
+  });
+
+  if (!uploadRes.ok) {
+    const errText = await uploadRes.text().catch(() => 'Unknown error');
+    throw new Error(`R2 upload failed (HTTP ${uploadRes.status}): ${errText}`);
+  }
+
+  // R2 doesn't do server-side image transformations — thumbnailUrl = same as publicUrl
+  // Next.js <Image> handles client-side resize/optimization automatically via its built-in optimizer
+  return { publicUrl, thumbnailUrl: publicUrl };
+}

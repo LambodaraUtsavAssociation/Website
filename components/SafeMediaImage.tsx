@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ImageOff, Film } from 'lucide-react';
 import { isVideoUrl } from '@/lib/mediaUtils';
+import { extractYouTubeId, getYouTubeThumbnail } from '@/lib/youtube';
 
 interface SafeMediaImageProps {
   src?: string | null;
@@ -37,14 +38,24 @@ export default function SafeMediaImage({
   const [hasError, setHasError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const isVideo = isVideoUrl(src);
-  // Only treat posterUrl as a valid thumbnail if it's NOT a video URL itself
-  const posterUrl = poster && !isVideoUrl(poster) ? poster : undefined;
+  // 1. Detect if this is a YouTube video (from src embed URL or poster)
+  const isEmbedUrl = typeof src === 'string' && src.includes('youtube.com/embed');
+  const ytId =
+    (src && extractYouTubeId(src)) ||
+    (poster && extractYouTubeId(poster)) ||
+    null;
+
+  const isVideo = isVideoUrl(src) || !!ytId || isEmbedUrl;
+  // Only treat posterUrl as a valid thumbnail if it's NOT a video/embed URL itself
+  const posterUrl =
+    poster && !isVideoUrl(poster) && !poster.includes('youtube.com/embed')
+      ? poster
+      : undefined;
   const hasImageThumbnail = Boolean(posterUrl);
 
   useEffect(() => {
     const videoEl = videoRef.current;
-    if (!videoEl || !isVideo) return;
+    if (!videoEl || !isVideo || ytId) return;
 
     if (isPlaying || autoPlayVideo) {
       videoEl.preload = 'auto';
@@ -57,7 +68,7 @@ export default function SafeMediaImage({
     } else {
       videoEl.pause();
     }
-  }, [isPlaying, autoPlayVideo, isVideo]);
+  }, [isPlaying, autoPlayVideo, isVideo, ytId]);
 
   const renderUnavailableFallback = () => (
     <div
@@ -77,14 +88,40 @@ export default function SafeMediaImage({
     </div>
   );
 
-  if (!src || hasError) {
+  if ((!src && !poster && !ytId) || hasError) {
     return renderUnavailableFallback();
   }
 
-  if (isVideo) {
-    // Not playing — show static content to avoid downloading video data (critical for mobile bandwidth)
+  // ── YouTube Video Thumbnail Rendering (Direct Google CDN, bypasses server optimizer) ──
+  if (ytId) {
+    const ytThumb = posterUrl || getYouTubeThumbnail(ytId, 'hq');
+    return (
+      <img
+        src={ytThumb}
+        alt={alt}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchPriority={priority ? 'high' : 'auto'}
+        width={480}
+        height={360}
+        onLoad={onLoad}
+        onError={(e) => {
+          const target = e.currentTarget;
+          if (target.src.includes('hqdefault.jpg')) {
+            target.src = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
+          } else {
+            setHasError(true);
+          }
+        }}
+        className={`${fill ? 'absolute inset-0 w-full h-full' : 'w-full h-auto'} ${className}`}
+      />
+    );
+  }
+
+  // ── Direct HTML5 Video File (mp4/webm) ───────────────────────────────────────
+  if (isVideoUrl(src)) {
+    // Not playing — show static image thumbnail
     if (!isPlaying && !autoPlayVideo) {
-      // Has a real image thumbnail → show it (zero video bytes loaded)
       if (hasImageThumbnail) {
         return (
           <Image
@@ -102,7 +139,6 @@ export default function SafeMediaImage({
         );
       }
 
-      // No thumbnail → show a static dark film icon placeholder (no video bytes loaded at all)
       return (
         <div
           className={`${
@@ -117,12 +153,12 @@ export default function SafeMediaImage({
       );
     }
 
-    // Playing (hover on desktop / opened in modal) → render actual video element
+    // Playing → render HTML5 video element
     return (
       <video
         ref={videoRef}
-        src={src}
-        poster={posterUrl}
+        src={src || undefined}
+        poster={posterUrl || undefined}
         muted
         loop
         playsInline
@@ -136,9 +172,15 @@ export default function SafeMediaImage({
     );
   }
 
+  // ── Guard against passing YouTube embed URLs into Next.js Image ──────────────
+  if (isEmbedUrl) {
+    return renderUnavailableFallback();
+  }
+
+  // ── Standard Image (Cloudflare R2, Unsplash, etc.) ──────────────────────────
   return (
     <Image
-      src={src}
+      src={src!}
       alt={alt}
       fill={fill}
       priority={priority}

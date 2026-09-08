@@ -36,6 +36,21 @@ export async function POST(request: NextRequest) {
     const caption = (formData.get('caption') as string) || '';
 
     if (directUrl) {
+      const adminSupabase = createAdminSupabaseClient();
+      if (adminSupabase) {
+        try {
+          await adminSupabase.from('hero_media').insert([{
+            url: directUrl,
+            caption: caption || 'Hero Visual Slide',
+            alt: caption || 'Hero Visual Slide',
+            is_active: true,
+            display_order: 1,
+          }]);
+        } catch (dbErr) {
+          console.warn('Hero media insert warning:', dbErr);
+        }
+      }
+
       logAuditEvent({
         action: 'UPLOAD_HERO_MEDIA',
         targetEntity: 'HeroMedia',
@@ -57,14 +72,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Enforce 200 KB file size limit for HD Hero Section
-    if (file.size > MAX_HERO_SIZE_BYTES) {
-      return NextResponse.json(
-        { error: `File size (${(file.size / 1024).toFixed(1)} KB) exceeds the maximum limit of 200 KB for Hero Section.` },
-        { status: 400 }
-      );
-    }
-
     const timestamp = Date.now();
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const fileName = `${timestamp}_${sanitizedName}`;
@@ -72,40 +79,41 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     let publicUrl = '';
-    let uploadedToSupabase = false;
-    const adminSupabase = createAdminSupabaseClient();
+    const { isR2Configured, uploadBufferToR2, buildR2Key } = await import('@/lib/r2');
 
-    if (adminSupabase) {
-      const possibleBuckets = ['hero-section', 'Hero Section', 'hero_section', 'hero-media'];
-      
-      for (const bucketName of possibleBuckets) {
-        try {
-          const { data, error } = await adminSupabase.storage
-            .from(bucketName)
-            .upload(fileName, buffer, {
-              contentType: file.type,
-              upsert: true,
-            });
-
-          if (!error && data) {
-            const { data: urlData } = adminSupabase.storage.from(bucketName).getPublicUrl(fileName);
-            publicUrl = urlData.publicUrl;
-            uploadedToSupabase = true;
-            break;
-          }
-        } catch (err) {
-          // try next bucket candidate
-        }
+    // 1. Upload to Cloudflare R2
+    if (isR2Configured()) {
+      try {
+        const key = buildR2Key('hero', sanitizedName);
+        publicUrl = await uploadBufferToR2(buffer, key, file.type || 'image/jpeg');
+      } catch (r2Err: any) {
+        console.warn('R2 hero upload fallback to local disk:', r2Err.message);
       }
     }
 
-    // Local disk fallback if Supabase storage upload didn't execute
-    if (!uploadedToSupabase) {
+    // 2. Local disk fallback
+    if (!publicUrl) {
       const localPath = saveHeroFileLocally(buffer, fileName);
       if (localPath) {
         publicUrl = localPath;
       } else {
         return NextResponse.json({ error: 'Failed to store file' }, { status: 500 });
+      }
+    }
+
+    // 3. Save to Supabase hero_media table
+    const adminSupabase = createAdminSupabaseClient();
+    if (adminSupabase) {
+      try {
+        await adminSupabase.from('hero_media').insert([{
+          url: publicUrl,
+          caption: caption || sanitizedName,
+          alt: caption || sanitizedName,
+          is_active: true,
+          display_order: 1,
+        }]);
+      } catch (dbErr) {
+        console.warn('Hero media DB insert warning:', dbErr);
       }
     }
 

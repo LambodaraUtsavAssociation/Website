@@ -32,6 +32,32 @@ export async function POST(request: NextRequest) {
     });
 
     saveStoredHeroMetadata(currentMetadata);
+
+    // Sync to Supabase hero_media table
+    try {
+      const { createAdminSupabaseClient } = await import('@/lib/supabase/server');
+      const adminSupabase = createAdminSupabaseClient();
+      if (adminSupabase) {
+        for (let i = 0; i < slides.length; i++) {
+          const slide = slides[i];
+          if (slide.url) {
+            await adminSupabase
+              .from('hero_media')
+              .update({
+                caption: slide.caption || 'Hero Slide',
+                alt: slide.alt || slide.caption || 'Hero Slide',
+                is_active: slide.isPublished !== false,
+                display_order: i + 1,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('url', slide.url);
+          }
+        }
+      }
+    } catch (dbErr) {
+      console.warn('Supabase hero_media update sync warning:', dbErr);
+    }
+
     revalidatePath('/', 'layout');
     revalidatePath('/admin/hero', 'page');
 

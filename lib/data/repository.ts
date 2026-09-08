@@ -15,39 +15,96 @@ let localYears: FestivalYear[] = [...INITIAL_YEARS];
 let localCategories: Category[] = [...INITIAL_CATEGORIES];
 let localMemories: Memory[] = [...INITIAL_MEMORIES];
 
+// ── In-Memory SWR Cache & In-Flight Promise Pooling ─────────────────────────
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const repositoryMemoryCache = new Map<string, CacheEntry<any>>();
+const inFlightPromises = new Map<string, Promise<any>>();
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
+export function invalidateRepositoryCache(keyPrefix?: string): void {
+  if (!keyPrefix) {
+    repositoryMemoryCache.clear();
+    inFlightPromises.clear();
+    return;
+  }
+  for (const k of Array.from(repositoryMemoryCache.keys())) {
+    if (k.startsWith(keyPrefix)) repositoryMemoryCache.delete(k);
+  }
+  for (const k of Array.from(inFlightPromises.keys())) {
+    if (k.startsWith(keyPrefix)) inFlightPromises.delete(k);
+  }
+}
+
+async function fetchWithDeduplication<T>(
+  key: string,
+  fetchFn: () => Promise<T>,
+  ttlMs = CACHE_TTL_MS
+): Promise<T> {
+  const cached = repositoryMemoryCache.get(key);
+  if (cached && Date.now() - cached.timestamp < ttlMs) {
+    return cached.data;
+  }
+
+  const existingPromise = inFlightPromises.get(key);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const p = fetchFn()
+    .then((result) => {
+      repositoryMemoryCache.set(key, { data: result, timestamp: Date.now() });
+      inFlightPromises.delete(key);
+      return result;
+    })
+    .catch((err) => {
+      inFlightPromises.delete(key);
+      throw err;
+    });
+
+  inFlightPromises.set(key, p);
+  return p;
+}
+
 function isSupabaseConfigured() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return url && !url.includes('demo-Vinayaka-Chavithi');
 }
 
 export async function getFestivalYears(onlyPublished = true): Promise<FestivalYear[]> {
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = createClient();
-      let query = supabase.from('festival_years').select('*').order('year', { ascending: false });
-      if (onlyPublished) {
-        query = query.eq('is_published', true);
+  const cacheKey = `years:${onlyPublished}`;
+  return fetchWithDeduplication(cacheKey, async () => {
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = getSupabaseMutationClient();
+        let query = supabase.from('festival_years').select('*').order('year', { ascending: false });
+        if (onlyPublished) {
+          query = query.eq('is_published', true);
+        }
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          return data as FestivalYear[];
+        }
+      } catch {
+        // Fallback
       }
-      const { data, error } = await query;
-      if (!error && data) {
-        return data as FestivalYear[];
-      }
-    } catch {
-      // Fallback
     }
-  }
 
-  const years = onlyPublished ? localYears.filter((y) => y.is_published) : localYears;
-  return years.map((y) => {
-    const yearMemories = localMemories.filter(
-      (m) => m.festival_year_id === y.id && (onlyPublished ? m.is_published : true)
-    );
-    return {
-      ...y,
-      memory_count: yearMemories.length,
-      photo_count: yearMemories.filter((m) => m.media_type === 'image').length,
-      video_count: yearMemories.filter((m) => m.media_type === 'video').length,
-    };
+    const years = onlyPublished ? localYears.filter((y) => y.is_published) : localYears;
+    return years.map((y) => {
+      const yearMemories = localMemories.filter(
+        (m) => m.festival_year_id === y.id && (onlyPublished ? m.is_published : true)
+      );
+      return {
+        ...y,
+        memory_count: yearMemories.length,
+        photo_count: yearMemories.filter((m) => m.media_type === 'image').length,
+        video_count: yearMemories.filter((m) => m.media_type === 'video').length,
+      };
+    });
   });
 }
 
@@ -59,7 +116,7 @@ export async function getActiveFestivalYear(): Promise<FestivalYear | null> {
 export async function getFestivalYearBySlug(slug: string): Promise<FestivalYear | null> {
   if (isSupabaseConfigured()) {
     try {
-      const supabase = createClient();
+      const supabase = getSupabaseMutationClient();
       const { data, error } = await supabase.from('festival_years').select('*').eq('slug', slug).single();
       if (!error && data) return data as FestivalYear;
     } catch {
@@ -79,17 +136,33 @@ export async function getFestivalYearBySlug(slug: string): Promise<FestivalYear 
   };
 }
 
-export async function getCategories(): Promise<Category[]> {
+export async function getFestivalYearById(id: string): Promise<FestivalYear | null> {
   if (isSupabaseConfigured()) {
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.from('categories').select('*').order('display_order', { ascending: true });
-      if (!error && data) return data as Category[];
+      const supabase = getSupabaseMutationClient();
+      const { data, error } = await supabase.from('festival_years').select('*').eq('id', id).single();
+      if (!error && data) return data as FestivalYear;
     } catch {
       // Fallback
     }
   }
-  return [...localCategories].sort((a, b) => a.display_order - b.display_order);
+
+  return localYears.find((y) => y.id === id) || null;
+}
+
+export async function getCategories(): Promise<Category[]> {
+  return fetchWithDeduplication('categories', async () => {
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = getSupabaseMutationClient();
+        const { data, error } = await supabase.from('categories').select('*').order('display_order', { ascending: true });
+        if (!error && data && data.length > 0) return data as Category[];
+      } catch {
+        // Fallback
+      }
+    }
+    return [...localCategories].sort((a, b) => a.display_order - b.display_order);
+  });
 }
 
 export async function getMemories(options?: {
@@ -100,65 +173,68 @@ export async function getMemories(options?: {
   featuredOnly?: boolean;
   onlyPublished?: boolean;
 }): Promise<Memory[]> {
-  const { yearId, yearSlug, categorySlug, mediaType, featuredOnly, onlyPublished = true } = options || {};
-  const blessingCounts = getBlessingCounts();
+  const cacheKey = `memories:${JSON.stringify(options || {})}`;
+  return fetchWithDeduplication(cacheKey, async () => {
+    const { yearId, yearSlug, categorySlug, mediaType, featuredOnly, onlyPublished = true } = options || {};
+    const blessingCounts = getBlessingCounts();
 
-  const attachBlessingsAndSort = (memList: Memory[]): Memory[] => {
-    const listWithBlessings = memList.map((m) => ({
-      ...m,
-      blessing_count: blessingCounts[m.id] || m.blessing_count || 0,
-    }));
+    const attachBlessingsAndSort = (memList: Memory[]): Memory[] => {
+      const listWithBlessings = memList.map((m) => ({
+        ...m,
+        blessing_count: blessingCounts[m.id] || m.blessing_count || 0,
+      }));
 
-    return listWithBlessings.sort((a, b) => {
-      const bCountDiff = (b.blessing_count || 0) - (a.blessing_count || 0);
-      if (bCountDiff !== 0) return bCountDiff; // Highest blessed first!
-      return a.display_order - b.display_order;
-    });
-  };
+      return listWithBlessings.sort((a, b) => {
+        const bCountDiff = (b.blessing_count || 0) - (a.blessing_count || 0);
+        if (bCountDiff !== 0) return bCountDiff; // Highest blessed first!
+        return a.display_order - b.display_order;
+      });
+    };
 
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = createClient();
-      let query = supabase.from('memories').select('*, category:categories(*)').order('display_order', { ascending: true });
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = getSupabaseMutationClient();
+        let query = supabase.from('memories').select('*, category:categories(*)').order('display_order', { ascending: true });
 
-      if (onlyPublished) query = query.eq('is_published', true);
-      if (featuredOnly) query = query.eq('is_featured', true);
-      if (mediaType) query = query.eq('media_type', mediaType);
-      if (yearId) query = query.eq('festival_year_id', yearId);
+        if (onlyPublished) query = query.eq('is_published', true);
+        if (featuredOnly) query = query.eq('is_featured', true);
+        if (mediaType) query = query.eq('media_type', mediaType);
+        if (yearId) query = query.eq('festival_year_id', yearId);
 
-      const { data, error } = await query;
-      if (!error && data) {
-        let result = data as Memory[];
-        if (categorySlug && categorySlug !== 'all') {
-          result = result.filter((m) => m.category?.slug === categorySlug);
+        const { data, error } = await query;
+        if (!error && data) {
+          let result = data as Memory[];
+          if (categorySlug && categorySlug !== 'all') {
+            result = result.filter((m) => m.category?.slug === categorySlug);
+          }
+          return attachBlessingsAndSort(result);
         }
-        return attachBlessingsAndSort(result);
+      } catch {
+        // Fallback
       }
-    } catch {
-      // Fallback
     }
-  }
 
-  let list = [...localMemories];
+    let list = [...localMemories];
 
-  if (onlyPublished) list = list.filter((m) => m.is_published);
-  if (featuredOnly) list = list.filter((m) => m.is_featured);
-  if (mediaType) list = list.filter((m) => m.media_type === mediaType);
+    if (onlyPublished) list = list.filter((m) => m.is_published);
+    if (featuredOnly) list = list.filter((m) => m.is_featured);
+    if (mediaType) list = list.filter((m) => m.media_type === mediaType);
 
-  if (yearId) {
-    list = list.filter((m) => m.festival_year_id === yearId);
-  } else if (yearSlug) {
-    const targetYear = localYears.find((y) => y.slug === yearSlug || y.year.toString() === yearSlug);
-    if (targetYear) {
-      list = list.filter((m) => m.festival_year_id === targetYear.id);
+    if (yearId) {
+      list = list.filter((m) => m.festival_year_id === yearId);
+    } else if (yearSlug) {
+      const targetYear = localYears.find((y) => y.slug === yearSlug || y.year.toString() === yearSlug);
+      if (targetYear) {
+        list = list.filter((m) => m.festival_year_id === targetYear.id);
+      }
     }
-  }
 
-  if (categorySlug && categorySlug !== 'all') {
-    list = list.filter((m) => m.category?.slug === categorySlug);
-  }
+    if (categorySlug && categorySlug !== 'all') {
+      list = list.filter((m) => m.category?.slug === categorySlug);
+    }
 
-  return attachBlessingsAndSort(list);
+    return attachBlessingsAndSort(list);
+  });
 }
 
 export async function getFeaturedMemories(limit = 6): Promise<Memory[]> {
@@ -213,6 +289,7 @@ export async function createFestivalYear(data: Omit<FestivalYear, 'id' | 'create
       if (error) {
         console.error('Supabase createFestivalYear error:', error);
       } else if (created) {
+        invalidateRepositoryCache('years');
         return created as FestivalYear;
       }
     } catch (err) {
@@ -221,6 +298,7 @@ export async function createFestivalYear(data: Omit<FestivalYear, 'id' | 'create
   }
 
   localYears.unshift(newYear);
+  invalidateRepositoryCache('years');
   return newYear;
 }
 
@@ -233,6 +311,7 @@ export async function updateFestivalYear(id: string, updates: Partial<FestivalYe
       if (error) {
         console.error('Supabase updateFestivalYear error:', error);
       } else if (data) {
+        invalidateRepositoryCache('years');
         return data as FestivalYear;
       }
     } catch (err) {
@@ -243,6 +322,7 @@ export async function updateFestivalYear(id: string, updates: Partial<FestivalYe
   const idx = localYears.findIndex((y) => y.id === id);
   if (idx === -1) return null;
   localYears[idx] = { ...localYears[idx], ...updates, updated_at };
+  invalidateRepositoryCache('years');
   return localYears[idx];
 }
 
@@ -254,6 +334,8 @@ export async function deleteFestivalYear(id: string): Promise<boolean> {
       if (error) {
         console.error('Supabase deleteFestivalYear error:', error);
       } else {
+        invalidateRepositoryCache('years');
+        invalidateRepositoryCache('memories');
         return true;
       }
     } catch (err) {
@@ -263,6 +345,8 @@ export async function deleteFestivalYear(id: string): Promise<boolean> {
 
   localYears = localYears.filter((y) => y.id !== id);
   localMemories = localMemories.filter((m) => m.festival_year_id !== id);
+  invalidateRepositoryCache('years');
+  invalidateRepositoryCache('memories');
   return true;
 }
 
@@ -318,10 +402,15 @@ export async function createMemory(formData: MemoryFormData & { customId?: strin
     category_id: formData.category_id || null,
     media_type: formData.media_type,
     title: formData.title,
+    telugu_title: formData.telugu_title || null,
     description: formData.description || null,
+    telugu_description: formData.telugu_description || null,
     capture_date: formData.capture_date || new Date().toISOString().split('T')[0],
     storage_path: formData.storage_path,
     thumbnail_path: formData.thumbnail_path || formData.storage_path,
+    card_path: formData.card_path || null,
+    full_path: formData.full_path || null,
+    youtube_video_id: formData.youtube_video_id || null,
     width: 1600,
     height: 1067,
     is_featured: formData.is_featured,
@@ -370,10 +459,15 @@ export async function createMemory(formData: MemoryFormData & { customId?: strin
         category_id: validCategoryId,
         media_type: formData.media_type,
         title: formData.title,
+        telugu_title: formData.telugu_title || null,
         description: formData.description || null,
+        telugu_description: formData.telugu_description || null,
         capture_date: formData.capture_date || new Date().toISOString().split('T')[0],
         storage_path: formData.storage_path,
         thumbnail_path: formData.thumbnail_path || formData.storage_path,
+        card_path: formData.card_path || null,
+        full_path: formData.full_path || null,
+        youtube_video_id: formData.youtube_video_id || null,
         width: 1600,
         height: 1067,
         is_featured: formData.is_featured,
@@ -390,6 +484,7 @@ export async function createMemory(formData: MemoryFormData & { customId?: strin
       if (error) {
         console.error('Supabase createMemory DB error:', error.message, error);
       } else if (data) {
+        invalidateRepositoryCache('memories');
         return data as Memory;
       }
     } catch (err) {
@@ -398,6 +493,7 @@ export async function createMemory(formData: MemoryFormData & { customId?: strin
   }
 
   localMemories.push(fallbackMemory);
+  invalidateRepositoryCache('memories');
   return fallbackMemory;
 }
 
@@ -476,6 +572,7 @@ export async function updateMemory(id: string, updates: Partial<Memory>): Promis
       if (error) {
         console.error('Supabase updateMemory error:', error);
       } else if (data) {
+        invalidateRepositoryCache('memories');
         return data as Memory;
       }
     } catch (err) {
@@ -492,6 +589,7 @@ export async function updateMemory(id: string, updates: Partial<Memory>): Promis
     updated_at,
     category: categoryObj || localMemories[idx].category,
   };
+  invalidateRepositoryCache('memories');
   return localMemories[idx];
 }
 
@@ -504,6 +602,17 @@ export async function deleteMemory(id: string): Promise<boolean> {
       const { data: mem } = await supabase.from('memories').select('*').eq('id', id).single();
 
       if (mem) {
+        // Clean up Cloudflare R2 objects if applicable
+        try {
+          const { deleteR2Object } = await import('../r2');
+          if (mem.storage_path) await deleteR2Object(mem.storage_path);
+          if (mem.thumbnail_path && mem.thumbnail_path !== mem.storage_path) {
+            await deleteR2Object(mem.thumbnail_path);
+          }
+        } catch (r2Err) {
+          console.warn('R2 memory cleanup warning:', r2Err);
+        }
+
         const pathsToRemove: string[] = [];
         [mem.storage_path, mem.thumbnail_path].forEach((url) => {
           if (url && url.includes('/festival-media/')) {
@@ -517,7 +626,7 @@ export async function deleteMemory(id: string): Promise<boolean> {
           }
         });
 
-        // Remove files from Supabase Storage
+        // Remove files from Supabase Storage if legacy file exists
         if (pathsToRemove.length > 0) {
           try {
             await supabase.storage.from('festival-media').remove(pathsToRemove);
@@ -532,6 +641,7 @@ export async function deleteMemory(id: string): Promise<boolean> {
       if (error) {
         console.error('Supabase deleteMemory error:', error);
       } else {
+        invalidateRepositoryCache('memories');
         return true;
       }
     } catch (err) {
@@ -540,6 +650,7 @@ export async function deleteMemory(id: string): Promise<boolean> {
   }
 
   localMemories = localMemories.filter((m) => m.id !== id);
+  invalidateRepositoryCache('memories');
   return true;
 }
 
@@ -551,6 +662,7 @@ export async function reorderMemories(orderedIds: string[]): Promise<boolean> {
         supabase.from('memories').update({ display_order: index + 1 }).eq('id', id)
       );
       await Promise.all(updates);
+      invalidateRepositoryCache('memories');
     } catch (err) {
       console.error('reorderMemories catch error:', err);
     }
@@ -563,6 +675,7 @@ export async function reorderMemories(orderedIds: string[]): Promise<boolean> {
     }
   });
 
+  invalidateRepositoryCache('memories');
   return true;
 }
 

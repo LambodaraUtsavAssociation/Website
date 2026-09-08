@@ -23,37 +23,43 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadYearDetails() {
       setIsLoading(true);
-      const yearObj = await getFestivalYearBySlug(params.year);
-      if (!yearObj) {
-        setIsLoading(false);
-        return;
+      try {
+        const yearObj = await getFestivalYearBySlug(params.year);
+        if (!isMounted) return;
+
+        if (!yearObj) {
+          setIsLoading(false);
+          return;
+        }
+
+        setYearData(yearObj);
+
+        const [cats, mems] = await Promise.all([
+          getCategories(),
+          getMemories({ yearId: yearObj.id, onlyPublished: true }),
+        ]);
+
+        if (!isMounted) return;
+        setCategories(cats);
+        setMemories(mems);
+      } catch (err) {
+        console.error('Failed to load year memories:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-
-      setYearData(yearObj);
-
-      const cats = await getCategories();
-      setCategories(cats);
-
-      const mems = await getMemories({ yearId: yearObj.id, onlyPublished: true });
-      setMemories(mems);
-      setIsLoading(false);
     }
 
     loadYearDetails();
+    return () => {
+      isMounted = false;
+    };
   }, [params.year]);
 
-  // Conditional early returns placed AFTER all hooks
-  if (isLoading) {
-    return (
-      <div className="min-h-screen pt-28 pb-20 flex flex-col items-center justify-center">
-        <RatLoader message="Loading Celebration Gallery..." submessage={`Fetching ${params.year} Festival Memories`} />
-      </div>
-    );
-  }
-
-  if (!yearData) {
+  if (!isLoading && !yearData) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 pt-24">
         <h1 className="font-editorial text-4xl text-ivory-50 mb-3">Festival Year Not Found</h1>
@@ -77,7 +83,7 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
   });
 
   const singleFilterOptions: DropdownOption[] = [
-    { value: 'all', label: `All ${yearData.year} Memories`, count: memories.length, isGroupHeader: true },
+    { value: 'all', label: `All ${yearData?.year || params.year} Memories`, count: memories.length, isGroupHeader: true },
   ];
 
   categories.forEach((cat) => {
@@ -139,7 +145,11 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
         </div>
 
         {/* Instagram Profile Style Gallery Grid */}
-        {filteredMemories.length > 0 ? (
+        {isLoading ? (
+          <div className="py-24 flex items-center justify-center">
+            <RatLoader message={`Loading ${params.year} Memories...`} />
+          </div>
+        ) : filteredMemories.length > 0 ? (
           <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-0.5 sm:gap-5 items-stretch w-full">
             {filteredMemories.map((memory, index) => (
               <GalleryCard

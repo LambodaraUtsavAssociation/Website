@@ -21,39 +21,6 @@ interface HeroMediaItem {
   isVideo?: boolean;
 }
 
-const INAUGURAL_VILLAGE_IMAGES: HeroMediaItem[] = [
-  {
-    url: '/images/hero/ganesha_front.webp',
-    caption: 'Mandap & Clay Idol Shrine',
-    alt: 'Clay Lord Vinayakaa idol seated inside an authentic village mandap with clay tiles and banana leaves',
-    isVideo: false,
-  },
-  {
-    url: '/images/hero/ganesha_mandap.webp',
-    caption: 'Papi Reddy Palli Gathering',
-    alt: 'Village community gathered around the decorated Vinayaka Chavithi pandal under coconut palms',
-    isVideo: false,
-  },
-  {
-    url: '/images/hero/ganesha_angle.webp',
-    caption: 'Rustic Clay Temple Shrine',
-    alt: 'Handcrafted clay Vinayakaa idol decorated with mango leaves and marigold flowers',
-    isVideo: false,
-  },
-  {
-    url: '/images/hero/ganesha_aarti.webp',
-    caption: 'Evening Aarti Ceremony',
-    alt: 'Atmospheric evening Aarti with brass deepam oil lamps in an open-air village mandap',
-    isVideo: false,
-  },
-  {
-    url: '/images/hero/ganesha_crown.webp',
-    caption: 'Sacred Clay Diya Illumination',
-    alt: 'Close-up of clay Vinayakaa idol adorned with marigold garlands, sugarcane, and clay diyas',
-    isVideo: false,
-  },
-];
-
 export default function HeroSection({
   festivalYear,
   memories = [],
@@ -64,12 +31,16 @@ export default function HeroSection({
   const [heroBucketMedia, setHeroBucketMedia] = useState<HeroMediaItem[]>([]);
   const currentCalYear = new Date().getFullYear();
 
-  // Fetch dedicated Hero Section bucket media (images or videos)
+  // Fetch dedicated Hero Section items (Cloudflare R2 images from database)
   useEffect(() => {
     let isMounted = true;
     getHeroBucketMedia().then((media) => {
       if (isMounted && media && media.length > 0) {
-        setHeroBucketMedia(media);
+        // Filter out any accidental local dummy paths
+        const cleanMedia = media.filter(
+          (m) => m.url && !m.url.includes('/images/hero/') && !m.url.includes('/uploads/hero-section/')
+        );
+        setHeroBucketMedia(cleanMedia);
       }
     });
     return () => {
@@ -77,10 +48,33 @@ export default function HeroSection({
     };
   }, []);
 
-  // Use dedicated Hero Section bucket media if present, otherwise fallback to inaugural visuals
-  const carouselMedia = heroBucketMedia.length > 0 ? heroBucketMedia : INAUGURAL_VILLAGE_IMAGES;
+  // 1. Prioritize Cloudflare R2 memories where admin marked is_featured = true
+  const featuredImageMemories = (memories || []).filter(
+    (m) => m.is_featured && m.is_published && m.media_type === 'image' && (m.full_path || m.storage_path)
+  );
 
-  // Auto-advance carousel every 5 seconds
+  const heroFromMemories: HeroMediaItem[] = featuredImageMemories.map((m) => ({
+    url: m.full_path || m.storage_path,
+    caption: m.title || 'Sri Vinayaka Chavithi Celebration',
+    alt: m.telugu_title || m.title || 'Papi Reddy Palli Mandap',
+    isVideo: false,
+  }));
+
+  // Clean hero items from /api/hero-media (strictly Cloudflare R2 items)
+  const cleanHeroBucket = heroBucketMedia.filter(
+    (item) =>
+      item.url &&
+      !item.url.includes('/images/hero/') &&
+      !item.url.includes('/uploads/hero-section/')
+  );
+
+  // Combine: prioritize featured photo memories, append any unique hero bucket items
+  const carouselMedia: HeroMediaItem[] = [
+    ...heroFromMemories,
+    ...cleanHeroBucket.filter((b) => !heroFromMemories.some((m) => m.url === b.url)),
+  ];
+
+  // Auto-advance carousel every 5 seconds when multiple slides exist
   useEffect(() => {
     if (carouselMedia.length <= 1) return;
     const timer = setInterval(() => {
@@ -92,40 +86,46 @@ export default function HeroSection({
   return (
     <section className="relative w-full h-screen h-[100dvh] max-h-[100dvh] flex flex-col justify-center items-center overflow-hidden bg-charcoal-950">
       {/* Dynamic Background Carousel with Full HD Crisp Clarity */}
-      <div className="absolute inset-0 z-0">
-        {carouselMedia.map((item, idx) => {
-          const isVideo = item.isVideo || /\.(mp4|webm|ogg|mov|m4v)$/i.test(item.url);
-          return (
-            <div
-              key={item.url + idx}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-              }`}
-            >
-              {isVideo ? (
-                <video
-                  src={item.url}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover object-center"
-                />
-              ) : (
-                <SafeMediaImage
-                  src={item.url}
-                  alt={item.alt}
-                  fill
-                  priority={idx === 0}
-                  quality={95}
-                  unoptimized={true}
-                  className="w-full h-full object-cover object-center transition-transform duration-10000 ease-linear scale-[1.02]"
-                  sizes="100vw"
-                />
-              )}
-            </div>
-          );
-        })}
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-charcoal-950 via-charcoal-900 to-charcoal-950">
+        {carouselMedia.length > 0 ? (
+          carouselMedia.map((item, idx) => {
+            const isVideo = item.isVideo || /\.(mp4|webm|ogg|mov|m4v)$/i.test(item.url);
+            return (
+              <div
+                key={item.url + idx}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                  idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                }`}
+              >
+                {isVideo ? (
+                  <video
+                    src={item.url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover object-center"
+                  />
+                ) : (
+                  <SafeMediaImage
+                    src={item.url}
+                    alt={item.alt}
+                    fill
+                    priority={idx === 0}
+                    quality={95}
+                    unoptimized={true}
+                    className="w-full h-full object-cover object-center transition-transform duration-10000 ease-linear scale-[1.02]"
+                    sizes="100vw"
+                  />
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+            <div className="absolute w-[500px] sm:w-[800px] h-[500px] sm:h-[800px] bg-gradient-to-tr from-amber-600/10 via-saffron-500/5 to-transparent rounded-full blur-3xl animate-pulse" />
+          </div>
+        )}
 
         {/* Dark Gradient Overlay for Readability */}
         <div className="absolute inset-0 z-20 bg-gradient-to-t from-charcoal-950 via-charcoal-950/50 to-black/30 pointer-events-none" />

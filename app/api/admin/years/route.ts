@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminSession } from '@/lib/auth';
-import { createFestivalYear } from '@/lib/data/repository';
+import { createFestivalYear, getFestivalYears } from '@/lib/data/repository';
 import { logAuditEvent } from '@/lib/telemetry';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  try {
+    const years = await getFestivalYears(false);
+    return NextResponse.json(
+      { success: true, years },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Failed to fetch festival years' }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   const admin = await verifyAdminSession();
@@ -35,6 +53,7 @@ export async function POST(request: NextRequest) {
     });
 
     revalidatePath('/', 'layout');
+    revalidatePath('/admin/years');
 
     return NextResponse.json({ success: true, year: createdYear });
   } catch (err: any) {

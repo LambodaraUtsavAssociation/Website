@@ -54,6 +54,8 @@ export interface Memory {
   card_path?: string | null;
   full_path?: string | null;
   hls_manifest_path?: string | null;
+  /** YouTube Video ID (e.g. 'dQw4w9WgXcQ'). When set, video is embedded from YouTube instead of Supabase storage. */
+  youtube_video_id?: string | null;
   file_size_bytes?: number | null;
   mime_type?: string | null;
   width?: number | null;
@@ -112,6 +114,8 @@ export interface MemoryFormData {
   thumbnail_path?: string;
   card_path?: string;
   full_path?: string;
+  /** YouTube Video ID — set when adding a video via YouTube URL instead of file upload */
+  youtube_video_id?: string;
   is_featured: boolean;
   is_published: boolean;
   display_order?: number;
