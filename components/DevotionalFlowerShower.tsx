@@ -140,7 +140,7 @@ export default function DevotionalFlowerShower() {
   }, [updateColumnCount]);
 
   // Trigger the side-by-side flower animation
-  const triggerFlowerShower = () => {
+  const triggerFlowerShower = useCallback(() => {
     setIsShowering(true);
 
     // Devotional haptic touch feedback on supported devices
@@ -167,7 +167,21 @@ export default function DevotionalFlowerShower() {
     timeoutRef.current = setTimeout(() => {
       setIsShowering(false);
     }, 5500);
-  };
+  }, []);
+
+  // Listen for external trigger events (e.g. when user clicks "Bless" in MemoryViewerModal)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleExternalTrigger = () => {
+      triggerFlowerShower();
+    };
+
+    window.addEventListener('trigger-flower-shower', handleExternalTrigger);
+    return () => {
+      window.removeEventListener('trigger-flower-shower', handleExternalTrigger);
+    };
+  }, [triggerFlowerShower]);
 
   const handleVideoEnded = () => {
     // Smoothly fade out when animation finishes
@@ -179,7 +193,7 @@ export default function DevotionalFlowerShower() {
       {/* Full-Screen Side-by-Side Falling Flower Shower Overlay */}
       <div
         aria-hidden="true"
-        className={`fixed inset-0 pointer-events-none z-50 flex flex-row items-stretch justify-center overflow-hidden transition-opacity duration-500 ${
+        className={`fixed inset-0 pointer-events-none z-[100] flex flex-row items-stretch justify-center overflow-hidden transition-opacity duration-500 ${
           isShowering ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
       >
