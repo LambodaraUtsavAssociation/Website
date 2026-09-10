@@ -10,6 +10,7 @@ import {
   getFeaturedVideo,
   getHeroBucketMedia,
 } from '@/lib/data/repository';
+import { filterGalleryMemories } from '@/lib/mediaUtils';
 
 import HeroSection from '@/components/HeroSection';
 import FestivalIntroSection from '@/components/FestivalIntroSection';
@@ -85,15 +86,16 @@ export default function HomePage() {
     };
   }, []);
 
-  const heroUrls = new Set((heroBucketMedia || []).map((h) => h.url).filter(Boolean));
+  // Filter out memories featured in the Hero section so that only actual gallery/celebration items are counted and displayed
+  const galleryMemories = filterGalleryMemories(allMemories, heroBucketMedia);
 
-  // Filter out memories featured in the Hero section to prevent duplicate display in the gallery below
-  const galleryMemories = allMemories.filter((m) => {
-    if (m.is_featured) return false;
-    if (m.storage_path && heroUrls.has(m.storage_path)) return false;
-    if (m.full_path && heroUrls.has(m.full_path)) return false;
-    if (m.thumbnail_path && heroUrls.has(m.thumbnail_path)) return false;
-    return true;
+  // Compute live gallery memory counts per year for Archive timeline, strictly excluding hero media
+  const enrichedYears = allYears.map((y) => {
+    const yearGalleryCount = galleryMemories.filter((m) => m.festival_year_id === y.id).length;
+    return {
+      ...y,
+      memory_count: yearGalleryCount,
+    };
   });
 
   const handleSelectMemory = (memory: Memory) => {
@@ -122,7 +124,7 @@ export default function HomePage() {
       />
 
       {/* Archive Years Section */}
-      <ArchiveYearsSection years={allYears} />
+      <ArchiveYearsSection years={enrichedYears} />
 
       {/* Fullscreen Lightbox Modal */}
       <MemoryViewerModal

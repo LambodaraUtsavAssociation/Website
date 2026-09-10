@@ -17,7 +17,8 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import { FestivalYear, Memory } from '@/types';
-import { getFestivalYears, getMemories } from '@/lib/data/repository';
+import { getFestivalYears, getMemories, getHeroBucketMedia } from '@/lib/data/repository';
+import { filterGalleryMemories } from '@/lib/mediaUtils';
 import RatLoader from '@/components/RatLoader';
 import CustomDropdown, { DropdownOption } from '@/components/CustomDropdown';
 
@@ -43,14 +44,17 @@ export default function ArchivePage() {
     async function loadData() {
       setIsLoading(true);
       try {
-        const [yearsData, memoriesData] = await Promise.all([
+        const [yearsData, memoriesData, heroMedia] = await Promise.all([
           getFestivalYears(true),
           getMemories({ onlyPublished: true }),
+          getHeroBucketMedia(),
         ]);
 
         if (isMounted) {
           setYears(yearsData);
-          setMemories(memoriesData);
+          // Strictly count only actual gallery/celebration memories, excluding hero section images
+          const galleryMemories = filterGalleryMemories(memoriesData, heroMedia);
+          setMemories(galleryMemories);
         }
       } catch (err) {
         console.error('Failed to load archive data:', err);

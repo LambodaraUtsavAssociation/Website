@@ -145,3 +145,26 @@ export function getMasonryAspectClass(index: number = 0, memory?: Partial<Memory
 
   return aspectPatterns[index % aspectPatterns.length];
 }
+
+/**
+ * Centrally filters memories to strictly include only gallery and celebration moments,
+ * dynamically excluding any hero section slides or featured hero images.
+ * This guarantees consistent counts across all pages (Archive, Year pages, Lightbox, etc.).
+ */
+export function filterGalleryMemories(
+  memories: Memory[],
+  heroBucketMedia?: { url: string }[] | null
+): Memory[] {
+  if (!memories || memories.length === 0) return [];
+  const heroUrls = new Set((heroBucketMedia || []).map((h) => h.url).filter(Boolean));
+
+  return memories.filter((m) => {
+    // Exclude if explicitly marked as featured hero item
+    if (m.is_featured) return false;
+    // Exclude if URL matches any active hero bucket slide
+    if (m.storage_path && heroUrls.has(m.storage_path)) return false;
+    if (m.full_path && heroUrls.has(m.full_path)) return false;
+    if (m.thumbnail_path && heroUrls.has(m.thumbnail_path)) return false;
+    return true;
+  });
+}

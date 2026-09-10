@@ -10,6 +10,7 @@ import {
   getMemories,
   getHeroBucketMedia,
 } from '@/lib/data/repository';
+import { filterGalleryMemories } from '@/lib/mediaUtils';
 import GalleryCard from '@/components/GalleryCard';
 import MemoryViewerModal from '@/components/MemoryViewerModal';
 import CustomDropdown, { DropdownOption } from '@/components/CustomDropdown';
@@ -52,18 +53,9 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
         if (!isMounted) return;
         setCategories(cats);
 
-        const heroUrls = new Set((heroBucketMedia || []).map((h) => h.url).filter(Boolean));
-
-        // Filter out hero section featured memories to prevent duplicate display in the gallery
-        const nonHeroMemories = mems.filter((m) => {
-          if (m.is_featured) return false;
-          if (m.storage_path && heroUrls.has(m.storage_path)) return false;
-          if (m.full_path && heroUrls.has(m.full_path)) return false;
-          if (m.thumbnail_path && heroUrls.has(m.thumbnail_path)) return false;
-          return true;
-        });
-
-        setMemories(nonHeroMemories);
+        // Filter out hero section featured memories so that counts and gallery items strictly match
+        const galleryMemories = filterGalleryMemories(mems, heroBucketMedia);
+        setMemories(galleryMemories);
       } catch (err) {
         console.error('Failed to load year memories:', err);
       } finally {
