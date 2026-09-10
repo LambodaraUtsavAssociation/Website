@@ -22,7 +22,7 @@ export default function CelebrationChaptersSection({
       {/* Chapter Title */}
       <div className="text-center max-w-3xl mx-auto mb-16">
         <span className="text-xs uppercase tracking-[0.25em] text-gold-400 font-semibold mb-3 block">
-          &#3118;&#3125;&#3134; &#3093;&#3134;&#3117;&#3134;&#3110;&#3135;&#3093;&#3134;&#3117;&#3135;&#3114;&#3137; &bull; 5-Day Sacred Festival Journey
+          మాధవ కీ కహబ దైబ బిపాక &bull; 5-Day Sacred Festival Journey
         </span>
         <h2 className="font-editorial text-3xl sm:text-5xl text-ivory-50 font-normal mb-4">
           Chapters of Devotion & Tradition
