@@ -1,8 +1,7 @@
 import { cookies } from 'next/headers';
+import { signSessionToken, verifySessionToken } from './sessionCrypto';
 
-const ADMIN_SESSION_COOKIE = 'Vinayaka_admin_session';
-const DEFAULT_ADMIN_EMAIL = 'admin@VinayakaChavithi.village';
-const DEFAULT_ADMIN_PASS = 'VillageVinayaka2026!';
+export const ADMIN_SESSION_COOKIE = 'Vinayaka_admin_session';
 
 export interface AdminUser {
   email: string;
@@ -15,23 +14,16 @@ export async function verifyAdminSession(): Promise<AdminUser | null> {
 
   if (!sessionToken) return null;
 
-  try {
-    const sessionData = JSON.parse(Buffer.from(sessionToken, 'base64').toString('utf-8'));
-    if (sessionData && sessionData.email && sessionData.exp > Date.now()) {
-      return { email: sessionData.email, role: 'admin' };
-    }
-  } catch {
-    return null;
-  }
+  const session = await verifySessionToken(sessionToken);
+  if (!session) return null;
 
-  return null;
+  return { email: session.email, role: 'admin' };
 }
 
 export async function setAdminSession(email: string): Promise<string> {
   const cookieStore = cookies();
   const exp = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-  const tokenPayload = JSON.stringify({ email, role: 'admin', exp });
-  const token = Buffer.from(tokenPayload).toString('base64');
+  const token = await signSessionToken({ email, role: 'admin', exp });
 
   cookieStore.set(ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
@@ -49,25 +41,31 @@ export async function clearAdminSession() {
   cookieStore.delete(ADMIN_SESSION_COOKIE);
 }
 
-const TARGET_ADMIN_EMAIL = (
-  process.env.ADMIN_EMAIL ||
-  process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
-  'vinayakachavithiprp@gmail.com'
-)
-  .trim()
-  .toLowerCase();
-
 export async function validateSupabaseAuth(
   email: string,
   pass: string
 ): Promise<{ success: boolean; error?: string }> {
   const cleanEmail = email.trim().toLowerCase();
+  const targetAdminEmail = (
+    process.env.ADMIN_EMAIL ||
+    process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
+    ''
+  )
+    .trim()
+    .toLowerCase();
 
-  // Enforce authorized administrator email
-  if (cleanEmail !== TARGET_ADMIN_EMAIL) {
+  if (!targetAdminEmail) {
     return {
       success: false,
-      error: `Access Denied: Only authorized administrator (${TARGET_ADMIN_EMAIL}) is permitted.`,
+      error: 'Server configuration error: ADMIN_EMAIL is not configured.',
+    };
+  }
+
+  // Enforce authorized administrator email
+  if (cleanEmail !== targetAdminEmail) {
+    return {
+      success: false,
+      error: 'Access Denied: Only authorized administrator is permitted.',
     };
   }
 
@@ -84,16 +82,16 @@ export async function validateSupabaseAuth(
       });
 
       if (!error && data?.user) {
-        if (data.user.email?.toLowerCase() === TARGET_ADMIN_EMAIL) {
+        if (data.user.email?.toLowerCase() === targetAdminEmail) {
           return { success: true };
         } else {
           return { success: false, error: 'Unauthorized user email.' };
         }
       }
 
-      // Check configured admin password fallback
-      const envAdminPass = process.env.ADMIN_PASSWORD || 'Luaprp@2026';
-      if (pass === envAdminPass) {
+      // Check configured admin password
+      const envAdminPass = process.env.ADMIN_PASSWORD;
+      if (envAdminPass && pass === envAdminPass) {
         return { success: true };
       }
 
@@ -105,9 +103,9 @@ export async function validateSupabaseAuth(
     }
   }
 
-  // Fallback check
-  const envAdminPass = process.env.ADMIN_PASSWORD || 'Luaprp@2026';
-  if (pass === envAdminPass) {
+  // Fallback check against configured environment variable
+  const envAdminPass = process.env.ADMIN_PASSWORD;
+  if (envAdminPass && pass === envAdminPass) {
     return { success: true };
   }
 

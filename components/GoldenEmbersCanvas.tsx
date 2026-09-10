@@ -63,20 +63,10 @@ export default function GoldenEmbersCanvas() {
       });
     }
 
-    let isVisible = true;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        isVisible = entries[0]?.isIntersecting ?? true;
-      },
-      { threshold: 0.1 }
-    );
-    observer.observe(canvas);
+    let isRunning = false;
 
     const render = () => {
-      if (!isVisible) {
-        animationFrameId = requestAnimationFrame(render);
-        return;
-      }
+      if (!isRunning) return;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -116,11 +106,36 @@ export default function GoldenEmbersCanvas() {
       animationFrameId = requestAnimationFrame(render);
     };
 
-    animationFrameId = requestAnimationFrame(render);
+    const startAnimation = () => {
+      if (!isRunning) {
+        isRunning = true;
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+
+    const stopAnimation = () => {
+      isRunning = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isIntersecting = entries[0]?.isIntersecting ?? true;
+        if (isIntersecting) {
+          startAnimation();
+        } else {
+          stopAnimation();
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(canvas);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationFrameId);
+      stopAnimation();
       observer.disconnect();
     };
   }, []);

@@ -11,11 +11,12 @@ import { getHeroBucketMedia } from '@/lib/data/repository';
 interface HeroSectionProps {
   festivalYear: FestivalYear;
   memories?: Memory[];
+  initialHeroMedia?: HeroMediaItem[];
   associationName?: string;
   villageName?: string;
 }
 
-interface HeroMediaItem {
+export interface HeroMediaItem {
   url: string;
   caption: string;
   alt: string;
@@ -25,15 +26,25 @@ interface HeroMediaItem {
 export default function HeroSection({
   festivalYear,
   memories = [],
+  initialHeroMedia,
   associationName = process.env.NEXT_PUBLIC_ASSOCIATION_NAME || 'Lambodara Utsav Association',
   villageName = process.env.NEXT_PUBLIC_VILLAGE_NAME || 'Papi Reddy Palli',
 }: HeroSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [heroBucketMedia, setHeroBucketMedia] = useState<HeroMediaItem[]>([]);
+  const [heroBucketMedia, setHeroBucketMedia] = useState<HeroMediaItem[]>(initialHeroMedia || []);
   const currentCalYear = new Date().getFullYear();
 
-  // Fetch dedicated Hero Section items (Cloudflare R2 images from database)
+  // Fetch or sync dedicated Hero Section items
   useEffect(() => {
+    if (initialHeroMedia !== undefined) {
+      const cleanMedia = initialHeroMedia.filter(
+        (m) =>
+          m.url && !m.url.includes('/images/hero/') && !m.url.includes('/uploads/hero-section/')
+      );
+      setHeroBucketMedia(cleanMedia);
+      return;
+    }
+
     let isMounted = true;
     getHeroBucketMedia().then((media) => {
       if (isMounted && media && media.length > 0) {
@@ -48,7 +59,7 @@ export default function HeroSection({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialHeroMedia]);
 
   // 1. Prioritize Cloudflare R2 memories where admin marked is_featured = true
   const featuredImageMemories = (memories || []).filter(
@@ -115,8 +126,7 @@ export default function HeroSection({
                     alt={item.alt}
                     fill
                     priority={idx === 0}
-                    quality={95}
-                    unoptimized={true}
+                    quality={90}
                     className="w-full h-full object-cover object-center transition-transform duration-10000 ease-linear scale-[1.02]"
                     sizes="100vw"
                   />

@@ -12,16 +12,17 @@ export const FESTIVAL_DATE_MAP: Record<number, { startDate: string; endDate: str
 };
 
 /**
- * Returns the 5-day festival dates for a given year.
+ * Returns the 5-day festival dates for a given year in Indian Standard Time (IST, UTC+05:30).
  */
 export function getFestivalDates(year: number) {
   const map = FESTIVAL_DATE_MAP[year];
   const startStr = map ? map.startDate : `${year}-09-14`;
   const endStr = map ? map.endDate : `${year}-09-18`;
 
+  // Explicitly anchor to Indian Standard Time (UTC+05:30) so devotees worldwide see exact festival schedule
   return {
-    startDate: new Date(`${startStr}T00:00:00`),
-    endDate: new Date(`${endStr}T23:59:59`),
+    startDate: new Date(`${startStr}T00:00:00+05:30`),
+    endDate: new Date(`${endStr}T23:59:59+05:30`),
   };
 }
 

@@ -210,7 +210,7 @@ export default function DevotionalFlowerShower() {
               src="/flower.webm"
               playsInline
               muted
-              preload="auto"
+              preload="metadata"
               className="w-full h-full object-cover object-top pointer-events-none mix-blend-screen"
               onEnded={handleVideoEnded}
             />
@@ -222,7 +222,7 @@ export default function DevotionalFlowerShower() {
       <audio
         ref={audioRef}
         src="/jaidev_jaidev.mp3"
-        preload="auto"
+        preload="none"
         loop
         onEnded={() => {
           isPlayingAudioRef.current = false;

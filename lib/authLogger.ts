@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import { createAdminSupabaseClient } from './supabase/admin';
 
 export interface AuthLogEntry {
@@ -12,7 +10,8 @@ export interface AuthLogEntry {
   created_at: string;
 }
 
-const AUDIT_LOG_FILE = path.join(process.cwd(), 'public', 'uploads', 'admin_audit_logs.json');
+// In-memory buffer for recent runtime logs (fallback if DB query fails)
+const recentLogsBuffer: AuthLogEntry[] = [];
 
 export async function logAdminAuthAttempt(
   entry: Omit<AuthLogEntry, 'id' | 'created_at'>
@@ -23,29 +22,11 @@ export async function logAdminAuthAttempt(
     created_at: new Date().toISOString(),
   };
 
-  // 1. Log to persistent file audit log
-  try {
-    const dir = path.dirname(AUDIT_LOG_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+  // Keep recent in-memory log entries (max 50)
+  recentLogsBuffer.unshift(newLog);
+  if (recentLogsBuffer.length > 50) recentLogsBuffer.pop();
 
-    let logs: AuthLogEntry[] = [];
-    if (fs.existsSync(AUDIT_LOG_FILE)) {
-      const content = fs.readFileSync(AUDIT_LOG_FILE, 'utf8');
-      logs = JSON.parse(content);
-    }
-
-    logs.unshift(newLog);
-    // Keep last 1000 audit logs
-    if (logs.length > 1000) logs = logs.slice(0, 1000);
-
-    fs.writeFileSync(AUDIT_LOG_FILE, JSON.stringify(logs, null, 2), 'utf8');
-  } catch (err) {
-    console.error('Failed writing local auth log:', err);
-  }
-
-  // 2. Insert into Supabase database table if present
+  // Insert into secure Supabase database table (protected by RLS)
   try {
     const supabase = createAdminSupabaseClient();
     if (supabase) {
@@ -60,21 +41,30 @@ export async function logAdminAuthAttempt(
         },
       ]);
     }
-  } catch {
-    // Table may not exist yet in schema cache
+  } catch (err) {
+    console.warn('Supabase admin_login_logs insert warning:', err);
   }
 
   return newLog;
 }
 
-export function getAdminAuthLogs(): AuthLogEntry[] {
+export async function getAdminAuthLogs(): Promise<AuthLogEntry[]> {
   try {
-    if (fs.existsSync(AUDIT_LOG_FILE)) {
-      const content = fs.readFileSync(AUDIT_LOG_FILE, 'utf8');
-      return JSON.parse(content);
+    const supabase = createAdminSupabaseClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('admin_login_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (!error && data) {
+        return data as AuthLogEntry[];
+      }
     }
-  } catch {
-    // Fallback
+  } catch (err) {
+    console.warn('Failed to query admin_login_logs from DB:', err);
   }
-  return [];
+
+  return recentLogsBuffer;
 }

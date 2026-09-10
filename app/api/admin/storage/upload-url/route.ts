@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth';
 import { createAdminSupabaseClient } from '@/lib/supabase/server';
+import { checkRateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
+  const rlResult = checkRateLimit(request, RATE_LIMITS.ADMIN_MUTATIONS, 'storage-upload-url');
+  if (!rlResult.success) {
+    return rateLimitExceededResponse(rlResult);
+  }
+
   const admin = await verifyAdminSession();
   if (!admin) {
     return NextResponse.json({ error: 'Unauthorized administrator access' }, { status: 401 });

@@ -1,11 +1,11 @@
-const CACHE_VERSION = 'lambodara-v2';
+const CACHE_VERSION = 'lambodara-v3';
 const CACHE_STATIC = `lambodara-static-${CACHE_VERSION}`;
 const CACHE_MEDIA = `lambodara-media-${CACHE_VERSION}`;
 const CACHE_API = `lambodara-api-${CACHE_VERSION}`;
 
-// Pre-cached critical offline/instant UI assets
+// Pre-cached critical offline/instant UI assets (optimized lightweight assets)
 const PRECACHE_ASSETS = [
-  '/images/village_logo_icon.png',
+  '/images/village_logo.webp',
   '/images/icon-192.png',
   '/images/icon-512.png',
   '/images/icon-maskable-192.png',

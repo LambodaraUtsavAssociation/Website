@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
+import { verifyAdminSession } from '@/lib/auth';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { getStoredHeroMetadata } from '@/lib/data/heroMetadata';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST() {
+  const admin = await verifyAdminSession();
+  if (!admin) {
+    return NextResponse.json({ error: 'Unauthorized administrator access' }, { status: 401 });
+  }
+
   const adminSupabase = createAdminSupabaseClient();
   if (!adminSupabase) {
     return NextResponse.json({ error: 'Supabase client unavailable' }, { status: 500 });
@@ -23,7 +29,7 @@ export async function POST() {
 
   const removedMediaFiles: string[] = [];
 
-  // Inspect festival-media subfolders
+  // Inspect festival-media subfolders in Supabase storage
   for (const folder of ['images', 'videos', 'thumbnails']) {
     const { data: files } = await adminSupabase.storage
       .from('festival-media')
@@ -37,7 +43,7 @@ export async function POST() {
           .getPublicUrl(relativePath);
         const publicUrl = publicUrlData.publicUrl.split('?')[0];
 
-        // If this file is NOT referenced in any DB memory record, remove it from storage!
+        // If this file is NOT referenced in any DB memory record, remove it
         if (!activeUrls.has(publicUrl)) {
           const { error } = await adminSupabase.storage
             .from('festival-media')
@@ -80,8 +86,4 @@ export async function POST() {
     removedHeroFiles,
     message: `Cleaned ${removedMediaFiles.length} orphaned festival media files and ${removedHeroFiles.length} hero files from Supabase Storage.`,
   });
-}
-
-export async function GET() {
-  return POST();
 }

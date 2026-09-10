@@ -11,7 +11,6 @@ export default function AboutPage() {
         <div className="relative inline-block py-2 px-8 border-y-2 border-gold-500/40 bg-charcoal-950/60 backdrop-blur-md mb-6">
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-gold-400 rotate-45 border border-charcoal-950" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gold-300">
-            &#3118;&#3112; &#3093;&#3134;&#3114;&#3137;&#3093;&#3134;&#3117;&#3137; &bull;{' '}
             {associationName} ({villageName})
           </span>
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-gold-400 rotate-45 border border-charcoal-950" />

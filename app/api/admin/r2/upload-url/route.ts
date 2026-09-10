@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth';
 import { generateR2PresignedUpload, isR2Configured, buildR2Key } from '@/lib/r2';
+import { checkRateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rateLimit';
 
 /**
  * POST /api/admin/r2/upload-url
@@ -13,6 +14,11 @@ import { generateR2PresignedUpload, isR2Configured, buildR2Key } from '@/lib/r2'
  * Response:     { presignedUrl: string, publicUrl: string, key: string }
  */
 export async function POST(request: NextRequest) {
+  const rlResult = checkRateLimit(request, RATE_LIMITS.ADMIN_MUTATIONS, 'r2-upload-url');
+  if (!rlResult.success) {
+    return rateLimitExceededResponse(rlResult);
+  }
+
   const admin = await verifyAdminSession();
   if (!admin) {
     return NextResponse.json({ error: 'Unauthorized administrator access' }, { status: 401 });

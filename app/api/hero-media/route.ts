@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase/server';
+import { checkRateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 interface HeroItemWithMeta {
   url: string;
@@ -14,13 +14,19 @@ interface HeroItemWithMeta {
 }
 
 export async function GET(request: NextRequest) {
+  // Apply rate limiting (max 120 req / minute per IP)
+  const rateLimitResult = checkRateLimit(request, RATE_LIMITS.PUBLIC_READ, 'hero-media');
+  if (!rateLimitResult.success) {
+    return rateLimitExceededResponse(rateLimitResult);
+  }
+
   const { searchParams } = new URL(request.url);
   const includeAll =
     searchParams.get('all') === 'true' || searchParams.get('onlyPublished') === 'false';
 
   const rawItems: HeroItemWithMeta[] = [];
 
-  // 1. Query Supabase Database for featured Cloudflare R2 photo memories and hero_media
+  // Query Supabase Database for featured Cloudflare R2 photo memories and hero_media
   try {
     const adminSupabase = createAdminSupabaseClient();
     if (adminSupabase) {
@@ -87,5 +93,9 @@ export async function GET(request: NextRequest) {
   // Filter out unpublished items unless requested by admin (all=true)
   const finalItems = includeAll ? rawItems : rawItems.filter((item) => item.isPublished !== false);
 
-  return NextResponse.json({ success: true, items: finalItems });
+  const response = NextResponse.json({ success: true, items: finalItems });
+  response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+  response.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString());
+  response.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
+  return response;
 }

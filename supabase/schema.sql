@@ -11,16 +11,12 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 -- -------------------------------------------------------------------------
 -- 1. DROP EXISTING TABLES (CLEAN SLATE RESET)
 -- -------------------------------------------------------------------------
-DROP TABLE IF EXISTS public.memory_tags CASCADE;
-DROP TABLE IF EXISTS public.tags CASCADE;
 DROP TABLE IF EXISTS public.blessings CASCADE;
 DROP TABLE IF EXISTS public.hero_media CASCADE;
 DROP TABLE IF EXISTS public.admin_login_logs CASCADE;
 DROP TABLE IF EXISTS public.memories CASCADE;
 DROP TABLE IF EXISTS public.categories CASCADE;
 DROP TABLE IF EXISTS public.festival_years CASCADE;
-DROP TABLE IF EXISTS public.admin_users CASCADE;
-DROP TABLE IF EXISTS public.audit_logs CASCADE;
 
 -- -------------------------------------------------------------------------
 -- 2. TABLE: festival_years
@@ -159,50 +155,7 @@ CREATE INDEX idx_admin_login_logs_created ON public.admin_login_logs(created_at 
 CREATE INDEX idx_admin_login_logs_email ON public.admin_login_logs(email);
 
 -- -------------------------------------------------------------------------
--- 8. TABLES: tags & memory_tags (Future-Proof Multi-Tagging)
--- -------------------------------------------------------------------------
-CREATE TABLE public.tags (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL UNIQUE,
-    slug VARCHAR(100) NOT NULL UNIQUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE public.memory_tags (
-    memory_id UUID NOT NULL REFERENCES public.memories(id) ON DELETE CASCADE,
-    tag_id UUID NOT NULL REFERENCES public.tags(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (memory_id, tag_id)
-);
-
-CREATE INDEX idx_memory_tags_tag ON public.memory_tags(tag_id);
-
--- -------------------------------------------------------------------------
--- 9. TABLE: admin_users & audit_logs
--- -------------------------------------------------------------------------
-CREATE TABLE public.admin_users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) NOT NULL UNIQUE,
-    role VARCHAR(50) NOT NULL DEFAULT 'admin' CHECK (role IN ('super_admin', 'editor', 'viewer')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE public.audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    action VARCHAR(100) NOT NULL,
-    actor_id UUID REFERENCES public.admin_users(id) ON DELETE SET NULL,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    details JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_audit_logs_action ON public.audit_logs(action);
-CREATE INDEX idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
-
--- -------------------------------------------------------------------------
--- 10. AUTOMATIC UPDATED_AT TRIGGER FUNCTION
+-- 8. AUTOMATIC UPDATED_AT TRIGGER FUNCTION
 -- -------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
@@ -236,26 +189,9 @@ CREATE TRIGGER set_hero_media_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
-DROP TRIGGER IF EXISTS set_admin_users_updated_at ON public.admin_users;
-CREATE TRIGGER set_admin_users_updated_at
-    BEFORE UPDATE ON public.admin_users
-    FOR EACH ROW
-    EXECUTE FUNCTION public.handle_updated_at();
-
 -- -------------------------------------------------------------------------
--- 11. UNSTOPPABLE ACCESS PERMISSIONS (ROW LEVEL SECURITY)
+-- 9. REALTIME & ACCESS PERMISSIONS
 -- -------------------------------------------------------------------------
--- To maximize throughput and guarantee zero-latency reads for devotees:
-ALTER TABLE public.festival_years DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.memories DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.hero_media DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.blessings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.admin_login_logs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tags DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.memory_tags DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.admin_users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;
 
 -- -------------------------------------------------------------------------
 -- 12. REALTIME SYNCHRONIZATION

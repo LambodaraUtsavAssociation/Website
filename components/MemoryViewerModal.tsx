@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import { X, Share2, Check, ChevronLeft, ChevronRight, Heart, Play, Sparkles } from 'lucide-react';
+import { X, Share2, Check, ChevronLeft, ChevronRight, Heart, Play, Sparkles, ExternalLink } from 'lucide-react';
 import { Memory } from '@/types';
 import SafeMediaImage from './SafeMediaImage';
 import { getMediaDisplayInfo } from '@/lib/mediaUtils';
+import { getYouTubeThumbnail } from '@/lib/youtube';
 import confetti from 'canvas-confetti';
 
 interface MemoryViewerModalProps {
@@ -24,6 +25,7 @@ export default function MemoryViewerModal({
   const [copied, setCopied] = useState(false);
   const [likedMemories, setLikedMemories] = useState<Record<string, boolean>>({});
   const [blessingCounts, setBlessingCounts] = useState<Record<string, number>>({});
+  const [loadedMediaMap, setLoadedMediaMap] = useState<Record<string, boolean>>({});
   const touchStartX = useRef<number | null>(null);
   const lastNavTime = useRef<number>(0);
 
@@ -31,7 +33,7 @@ export default function MemoryViewerModal({
 
   const handlePrev = useCallback(() => {
     const now = Date.now();
-    if (now - lastNavTime.current < 120) return;
+    if (now - lastNavTime.current < 75) return;
     lastNavTime.current = now;
 
     if (selectedIndex !== null && selectedIndex > 0) {
@@ -43,7 +45,7 @@ export default function MemoryViewerModal({
 
   const handleNext = useCallback(() => {
     const now = Date.now();
-    if (now - lastNavTime.current < 120) return;
+    if (now - lastNavTime.current < 75) return;
     lastNavTime.current = now;
 
     if (selectedIndex !== null && selectedIndex < memories.length - 1) {
@@ -54,11 +56,20 @@ export default function MemoryViewerModal({
   }, [selectedIndex, memories.length, onNavigate]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    // If multi-touch (pinch-to-zoom), do not initiate swipe navigation
+    if (e.touches.length > 1) {
+      touchStartX.current = null;
+      return;
+    }
     touchStartX.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
+    if (e.touches.length > 0) {
+      touchStartX.current = null;
+      return;
+    }
     const diffX = touchStartX.current - e.changedTouches[0].clientX;
     touchStartX.current = null;
     if (Math.abs(diffX) > 50) {
@@ -116,28 +127,34 @@ export default function MemoryViewerModal({
     }
   }, [selectedIndex, memories]);
 
-  // Smart background preloading of adjacent images in gallery
+  // Aggressive predictive preloading of adjacent images (±1 and ±2) for rapid zero-lag swiping
   useEffect(() => {
     if (selectedIndex === null || memories.length <= 1) return;
 
-    const nextIdx = selectedIndex < memories.length - 1 ? selectedIndex + 1 : 0;
-    const prevIdx = selectedIndex > 0 ? selectedIndex - 1 : memories.length - 1;
+    const indicesToPreload = [
+      (selectedIndex + 1) % memories.length,
+      (selectedIndex - 1 + memories.length) % memories.length,
+      (selectedIndex + 2) % memories.length,
+      (selectedIndex - 2 + memories.length) % memories.length,
+    ];
 
-    const preloadImage = (url?: string | null) => {
-      if (!url || typeof window === 'undefined') return;
-      const img = new window.Image();
-      img.decoding = 'async';
-      img.src = url;
-    };
+    indicesToPreload.forEach((idx) => {
+      const mem = memories[idx];
+      if (!mem) return;
+      const fullUrl = mem.full_path || mem.storage_path;
+      const thumbUrl = mem.thumbnail_path;
 
-    const nextMem = memories[nextIdx];
-    if (nextMem && nextMem.media_type === 'image') {
-      preloadImage(nextMem.full_path || nextMem.storage_path);
-    }
-    const prevMem = memories[prevIdx];
-    if (prevMem && prevMem.media_type === 'image') {
-      preloadImage(prevMem.full_path || prevMem.storage_path);
-    }
+      if (fullUrl && mem.media_type === 'image') {
+        const img = new window.Image();
+        img.decoding = 'async';
+        img.src = fullUrl;
+      }
+      if (thumbUrl && thumbUrl !== fullUrl) {
+        const thumb = new window.Image();
+        thumb.decoding = 'async';
+        thumb.src = thumbUrl;
+      }
+    });
   }, [selectedIndex, memories]);
 
   useEffect(() => {
@@ -375,23 +392,50 @@ export default function MemoryViewerModal({
       <main className="w-full max-w-[1920px] mx-auto px-3.5 sm:px-6 md:px-8 lg:px-10 py-3.5 sm:py-6 flex flex-col lg:flex-row gap-5 lg:gap-8 items-start flex-1">
         {/* Left Primary Column: Media Player + Title + Association Info + Action Pills + Description */}
         <div className="w-full lg:flex-1 flex flex-col min-w-0">
-          {/* Main Media Player Box */}
+          {/* Main Media Player Box with Instant Facade & High Definition Smooth Crossfade */}
           <div className="relative w-full h-[46vh] sm:h-[58vh] lg:h-[66vh] xl:h-[72vh] rounded-2xl overflow-hidden bg-black border border-gold-500/30 shadow-2xl shadow-gold-500/5 flex items-center justify-center">
             {(() => {
               const mediaInfo = getMediaDisplayInfo(currentMemory);
+              const isFullLoaded = !!loadedMediaMap[currentMemory.id];
+              const thumbUrl = currentMemory.thumbnail_path || currentMemory.storage_path;
+
               if (mediaInfo.isYouTube && mediaInfo.youtubeVideoId) {
                 return (
-                  <iframe
-                    key={mediaInfo.youtubeVideoId}
-                    src={`https://www.youtube-nocookie.com/embed/${mediaInfo.youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
-                    title={currentMemory.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                    allowFullScreen
-                    className="w-full h-full"
-                    style={{ border: 'none' }}
-                  />
+                  <div className="relative w-full h-full bg-black flex items-center justify-center">
+                    {!isFullLoaded && (
+                      <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                        <img
+                          src={mediaInfo.thumbnailUrl || getYouTubeThumbnail(mediaInfo.youtubeVideoId, 'hq')}
+                          alt={currentMemory.title}
+                          className="w-full h-full object-contain filter blur-xs opacity-70"
+                        />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+                          <div className="w-12 h-12 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-2xl mb-2 animate-pulse">
+                            <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+                          </div>
+                          <span className="text-[11px] text-ivory-200 font-sans font-medium tracking-wide">
+                            Loading Devotional Video...
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <iframe
+                      key={mediaInfo.youtubeVideoId}
+                      src={`https://www.youtube-nocookie.com/embed/${mediaInfo.youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                      title={currentMemory.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                      allowFullScreen
+                      loading="eager"
+                      onLoad={() =>
+                        setLoadedMediaMap((prev) => ({ ...prev, [currentMemory.id]: true }))
+                      }
+                      className="w-full h-full relative z-20"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
                 );
               }
+
               if (currentMemory.media_type === 'video') {
                 return (
                   <video
@@ -405,15 +449,43 @@ export default function MemoryViewerModal({
                   />
                 );
               }
+
               return (
-                <Image
-                  src={currentMemory.full_path || currentMemory.storage_path}
-                  alt={currentMemory.title}
-                  fill
-                  priority
-                  className="object-contain"
-                  sizes="(max-width: 1024px) 100vw, 75vw"
-                />
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {/* Instant Low-Res Thumbnail Layer (renders on frame 0 from gallery card cache) */}
+                  {!isFullLoaded && thumbUrl && (
+                    <img
+                      src={thumbUrl}
+                      alt={currentMemory.title}
+                      className="absolute inset-0 w-full h-full object-contain filter blur-sm opacity-60 pointer-events-none transition-opacity duration-300"
+                    />
+                  )}
+
+                  {/* Centered Sacred Buffering Indicator */}
+                  {!isFullLoaded && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 space-y-2">
+                      <div className="w-9 h-9 border-2 border-gold-400/20 border-t-gold-400 rounded-full animate-spin shadow-glow-gold" />
+                      <span className="text-[10px] text-gold-300 font-sans tracking-widest uppercase font-semibold">
+                        Enhancing Darshan...
+                      </span>
+                    </div>
+                  )}
+
+                  <Image
+                    key={currentMemory.id}
+                    src={currentMemory.full_path || currentMemory.storage_path}
+                    alt={currentMemory.title}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 75vw"
+                    className={`object-contain transition-opacity duration-300 ${
+                      isFullLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    onLoad={() =>
+                      setLoadedMediaMap((prev) => ({ ...prev, [currentMemory.id]: true }))
+                    }
+                  />
+                </div>
               );
             })()}
           </div>
@@ -491,6 +563,26 @@ export default function MemoryViewerModal({
                 )}
                 <span>{copied ? 'Copied' : 'Share'}</span>
               </button>
+
+              {/* YouTube Watch Link */}
+              {(() => {
+                const mediaInfo = getMediaDisplayInfo(currentMemory);
+                if (mediaInfo.isYouTube && mediaInfo.youtubeVideoId) {
+                  return (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${mediaInfo.youtubeVideoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full bg-charcoal-850 border border-gold-500/30 text-xs font-bold text-ivory-100 hover:text-gold-300 hover:border-gold-400 flex items-center justify-center space-x-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                      title="Watch directly on YouTube"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-red-500" />
+                      <span className="hidden sm:inline">YouTube</span>
+                    </a>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Right: Prev / Next Navigation Arrows */}

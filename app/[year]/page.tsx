@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Filter } from 'lucide-react';
+import { Filter, WifiOff, RefreshCw } from 'lucide-react';
 import { FestivalYear, Category, Memory } from '@/types';
 import {
   getFestivalYearBySlug,
@@ -12,10 +12,10 @@ import {
 } from '@/lib/data/repository';
 import { filterGalleryMemories } from '@/lib/mediaUtils';
 import GalleryCard from '@/components/GalleryCard';
-import MemoryViewerModal from '@/components/MemoryViewerModal';
 import CustomDropdown, { DropdownOption } from '@/components/CustomDropdown';
 import EmptyState from '@/components/EmptyState';
 import RatLoader from '@/components/RatLoader';
+import MemoryViewerModal from '@/components/MemoryViewerModal';
 
 export default function FestivalYearPage({ params }: { params: { year: string } }) {
   // All Hooks MUST be declared at top-level before any conditional returns
@@ -27,47 +27,72 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
   const [selectedFilterValue, setSelectedFilterValue] = useState<string>('all');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const loadYearDetails = async () => {
+    setIsLoading(true);
+    setFetchError(null);
+    try {
+      const yearObj = await getFestivalYearBySlug(params.year);
+
+      if (!yearObj) {
+        setIsLoading(false);
+        return;
+      }
+
+      setYearData(yearObj);
+
+      const [cats, mems, heroBucketMedia] = await Promise.all([
+        getCategories(),
+        getMemories({ yearId: yearObj.id, onlyPublished: true }),
+        getHeroBucketMedia().catch(() => []),
+      ]);
+
+      setCategories(cats);
+
+      // Filter out hero section featured memories so that counts and gallery items strictly match
+      const galleryMemories = filterGalleryMemories(mems, heroBucketMedia);
+      setMemories(galleryMemories);
+    } catch (err: any) {
+      console.error('Failed to load year memories:', err);
+      setFetchError(err?.message || 'Network connection failed while fetching memories.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadYearDetails() {
-      setIsLoading(true);
-      try {
-        const yearObj = await getFestivalYearBySlug(params.year);
-        if (!isMounted) return;
-
-        if (!yearObj) {
-          setIsLoading(false);
-          return;
-        }
-
-        setYearData(yearObj);
-
-        const [cats, mems, heroBucketMedia] = await Promise.all([
-          getCategories(),
-          getMemories({ yearId: yearObj.id, onlyPublished: true }),
-          getHeroBucketMedia().catch(() => []),
-        ]);
-
-        if (!isMounted) return;
-        setCategories(cats);
-
-        // Filter out hero section featured memories so that counts and gallery items strictly match
-        const galleryMemories = filterGalleryMemories(mems, heroBucketMedia);
-        setMemories(galleryMemories);
-      } catch (err) {
-        console.error('Failed to load year memories:', err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
     loadYearDetails();
-    return () => {
-      isMounted = false;
-    };
   }, [params.year]);
+
+  if (!isLoading && fetchError) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 pt-24">
+        <div className="w-14 h-14 rounded-2xl bg-charcoal-850 border border-gold-500/30 flex items-center justify-center text-gold-400 mb-4 shadow-inner">
+          <WifiOff className="w-7 h-7 text-gold-400/90" />
+        </div>
+        <h1 className="font-editorial text-3xl sm:text-4xl text-ivory-50 mb-3">Connection Interrupted</h1>
+        <p className="text-sm text-ivory-400 max-w-md mb-6 leading-relaxed">
+          Could not load festival memories for {yearData?.year || params.year}. Please check your internet connection.
+        </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => loadYearDetails()}
+            className="inline-flex items-center space-x-2 px-6 py-2.5 bg-saffron-600 hover:bg-saffron-500 border-b-2 border-gold-400 text-ivory-50 text-xs font-semibold uppercase tracking-[0.2em] transition-all cursor-pointer shadow-lg active:scale-95"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry Connection</span>
+          </button>
+          <Link
+            href="/"
+            className="px-6 py-2.5 bg-charcoal-800 hover:bg-charcoal-700 text-ivory-200 text-xs font-semibold uppercase tracking-[0.15em] border border-charcoal-700 transition-all"
+          >
+            Return Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!isLoading && !yearData) {
     return (

@@ -223,11 +223,19 @@ export async function getMemories(options?: {
         if (mediaType) query = query.eq('media_type', mediaType);
         if (yearId) query = query.eq('festival_year_id', yearId);
 
+        if (categorySlug && categorySlug !== 'all') {
+          const catsInDb = await getCategories();
+          const targetCat = catsInDb.find((c) => c.slug === categorySlug);
+          if (targetCat) {
+            query = query.eq('category_id', targetCat.id);
+          }
+        }
+
         const { data, error } = await query;
         if (!error && data) {
           let result = data as Memory[];
           if (categorySlug && categorySlug !== 'all') {
-            result = result.filter((m) => m.category?.slug === categorySlug);
+            result = result.filter((m) => m.category?.slug === categorySlug || m.category_id);
           }
           return attachBlessingsAndSort(result);
         }
@@ -368,6 +376,19 @@ export async function deleteFestivalYear(id: string): Promise<boolean> {
   if (isSupabaseConfigured()) {
     try {
       const supabase = getSupabaseMutationClient();
+
+      // Clean up all memories associated with this festival year first (deleting R2 files)
+      const { data: yearMems } = await supabase
+        .from('memories')
+        .select('id')
+        .eq('festival_year_id', id);
+
+      if (yearMems && yearMems.length > 0) {
+        for (const m of yearMems) {
+          await deleteMemory(m.id);
+        }
+      }
+
       const { error } = await supabase.from('festival_years').delete().eq('id', id);
       if (error) {
         console.error('Supabase deleteFestivalYear error:', error);
@@ -546,61 +567,47 @@ export async function createMemory(
 export async function getHeroBucketMedia(): Promise<
   { url: string; caption: string; alt: string; isVideo?: boolean }[]
 > {
-  try {
-    const response = await fetch('/api/hero-media', { cache: 'no-store' });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.items && data.items.length > 0) {
-        return data.items;
+  const cacheKey = 'hero_bucket_media_items';
+  return fetchWithDeduplication(cacheKey, async () => {
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = getSupabaseMutationClient();
+        const { data: heroRows, error: heroErr } = await supabase
+          .from('hero_media')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+
+        if (!heroErr && heroRows && heroRows.length > 0) {
+          return heroRows.map((h: any) => ({
+            url: h.url,
+            caption: h.caption || 'Hero Slide',
+            alt: h.alt || h.caption || 'Hero Slide',
+            isVideo: !!h.is_video,
+          }));
+        }
+      } catch (err) {
+        console.warn('Supabase hero_media direct fetch warning:', err);
       }
     }
-  } catch (err) {
-    console.warn('Failed fetching /api/hero-media:', err);
-  }
 
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = createClient();
-      const possibleBuckets = ['hero-section', 'Hero Section', 'hero_section', 'hero-media'];
-      const MAX_HERO_FILE_SIZE_BYTES = 200 * 1024; // 200 KB limit for HD clarity
-
-      for (const bucketName of possibleBuckets) {
-        const { data: files, error } = await supabase.storage.from(bucketName).list('', {
-          limit: 50,
-          sortBy: { column: 'created_at', order: 'desc' },
-        });
-
-        if (!error && files && files.length > 0) {
-          const validFiles = files.filter((f: any) => {
-            if (!f.name || f.name.startsWith('.')) return false;
-            const size = f.metadata?.size ?? f.metadata?.contentLength ?? 0;
-            if (size > 0 && size > MAX_HERO_FILE_SIZE_BYTES) {
-              return false;
-            }
-            return true;
-          });
-
-          if (validFiles.length > 0) {
-            return validFiles.map((f: any) => {
-              const { data } = supabase.storage.from(bucketName).getPublicUrl(f.name);
-              const cleanTitle = f.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
-              const isVideo = /\.(mp4|webm|ogg|mov|m4v)$/i.test(f.name);
-              return {
-                url: data.publicUrl,
-                caption: cleanTitle,
-                alt: cleanTitle,
-                isVideo,
-              };
-            });
+    // Client-side fallback if in browser
+    if (typeof window !== 'undefined') {
+      try {
+        const response = await fetch('/api/hero-media');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.items && data.items.length > 0) {
+            return data.items;
           }
         }
+      } catch {
+        // Ignore fallback error
       }
-    } catch (err) {
-      console.warn('Supabase hero bucket fetch warning:', err);
     }
-  }
 
-  return [];
+    return [];
+  }, 120 * 1000);
 }
 
 export async function updateMemory(id: string, updates: Partial<Memory>): Promise<Memory | null> {

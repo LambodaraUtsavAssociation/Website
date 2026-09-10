@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import ToastContainer from '@/components/ToastContainer';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import DevotionalFlowerShower from '@/components/DevotionalFlowerShower';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 
 const cinzel = Cinzel({
   subsets: ['latin'],
@@ -30,15 +31,19 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://lambodarautsav.org');
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(siteUrl),
   title: `${associationName} (${villageName}) - Vinayaka Chavithi Digital Gallery`,
   description: `A permanent, cinematic digital gallery preserving the faith, tradition, celebration, and memories of ${associationName}, ${villageName}.`,
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/images/village_logo_icon.svg', type: 'image/svg+xml' },
-      { url: '/images/village_logo_icon.png', type: 'image/png' },
+      { url: '/images/village_logo.webp', type: 'image/webp' },
+      { url: '/images/icon-192.png', type: 'image/png' },
     ],
     shortcut: '/favicon.ico',
     apple: '/apple-touch-icon.png',
@@ -47,7 +52,22 @@ export const metadata: Metadata = {
     title: `${associationName} (${villageName}) - Vinayaka Chavithi Digital Gallery`,
     description: `Pure devotion. Timeless memories. One association. One celebration.`,
     type: 'website',
-    images: ['/images/village_logo_icon.png'],
+    url: siteUrl,
+    siteName: `${associationName} (${villageName})`,
+    images: [
+      {
+        url: '/images/village_logo.png',
+        width: 1200,
+        height: 630,
+        alt: `${associationName} - Vinayaka Chavithi Celebrations`,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${associationName} (${villageName}) - Vinayaka Chavithi Digital Gallery`,
+    description: `Pure devotion. Timeless memories. One association. One celebration.`,
+    images: ['/images/village_logo.png'],
   },
   manifest: '/manifest.json',
   appleWebApp: {
@@ -81,6 +101,61 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'Organization',
+                  '@id': `${siteUrl}/#organization`,
+                  name: associationName,
+                  alternateName: `${associationName} ${villageName}`,
+                  url: siteUrl,
+                  logo: `${siteUrl}/images/village_logo.png`,
+                  address: {
+                    '@type': 'PostalAddress',
+                    addressLocality: villageName,
+                    addressRegion: 'Andhra Pradesh',
+                    addressCountry: 'IN',
+                  },
+                },
+                {
+                  '@type': 'Event',
+                  '@id': `${siteUrl}/#festival`,
+                  name: `Vinayaka Chavithi Celebrations - ${associationName}`,
+                  description: `Annual Vinayaka Chavithi celebrations, cultural rituals, and community festivities organized by ${associationName}, ${villageName}.`,
+                  url: siteUrl,
+                  organizer: {
+                    '@id': `${siteUrl}/#organization`,
+                  },
+                  eventStatus: 'https://schema.org/EventScheduled',
+                  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                  location: {
+                    '@type': 'Place',
+                    name: `${villageName} Celebration Mandapam`,
+                    address: {
+                      '@type': 'PostalAddress',
+                      addressLocality: villageName,
+                      addressRegion: 'Andhra Pradesh',
+                      addressCountry: 'IN',
+                    },
+                  },
+                },
+                {
+                  '@type': 'ImageGallery',
+                  '@id': `${siteUrl}/#gallery`,
+                  name: `${associationName} Digital Festival Archive`,
+                  description: `Sacred memories, video highlights, and darshan gallery of Vinayaka Chavithi celebrations in ${villageName}.`,
+                  publisher: {
+                    '@id': `${siteUrl}/#organization`,
+                  },
+                },
+              ],
+            }),
+          }}
+        />
       </head>
       <body
         className="bg-charcoal-950 text-ivory-50 min-h-screen flex flex-col selection:bg-saffron-600 selection:text-white font-sans"
@@ -92,6 +167,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer associationName={associationName} villageName={villageName} />
         <ToastContainer />
         <DevotionalFlowerShower />
+        <PWAInstallPrompt associationName={associationName} villageName={villageName} />
       </body>
     </html>
   );

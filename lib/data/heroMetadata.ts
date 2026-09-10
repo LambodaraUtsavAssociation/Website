@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 export interface HeroMetadataItem {
@@ -9,7 +8,8 @@ export interface HeroMetadataItem {
   order: number;
 }
 
-const METADATA_PATH = path.join(process.cwd(), 'public', 'uploads', 'hero-section-metadata.json');
+// In-memory hero metadata registry
+const inMemoryHeroMetadata: Record<string, HeroMetadataItem> = {};
 
 function cleanCaptionName(rawName: string): string {
   // Strip extension
@@ -25,27 +25,11 @@ function cleanCaptionName(rawName: string): string {
 }
 
 export function getStoredHeroMetadata(): Record<string, HeroMetadataItem> {
-  try {
-    if (fs.existsSync(METADATA_PATH)) {
-      const content = fs.readFileSync(METADATA_PATH, 'utf-8');
-      return JSON.parse(content);
-    }
-  } catch (err) {
-    console.error('Failed reading hero metadata:', err);
-  }
-  return {};
+  return { ...inMemoryHeroMetadata };
 }
 
 export function saveStoredHeroMetadata(metadata: Record<string, HeroMetadataItem>): void {
-  try {
-    const dir = path.dirname(METADATA_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Failed saving hero metadata:', err);
-  }
+  Object.assign(inMemoryHeroMetadata, metadata);
 }
 
 export function formatHeroCaption(urlOrFilename: string, fallbackCaption?: string): string {

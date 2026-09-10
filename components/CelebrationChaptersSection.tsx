@@ -37,7 +37,7 @@ export default function CelebrationChaptersSection({
       {/* Gallery Cards Grid or Loader */}
       {isLoading ? (
         <div className="py-12 flex justify-center">
-          <RatLoader message="మూషిక వాహన &bull; Loading Moments..." />
+          <RatLoader message="Loading Moments..." />
         </div>
       ) : memories.length > 0 ? (
         <div className="grid grid-cols-3 md:grid-cols-4 gap-0.5 sm:gap-2">

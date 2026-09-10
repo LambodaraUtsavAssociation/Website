@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { verifyAdminSession } from '@/lib/auth';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
@@ -68,6 +69,11 @@ const OFFICIAL_CATEGORIES = [
 ];
 
 export async function POST() {
+  const admin = await verifyAdminSession();
+  if (!admin) {
+    return NextResponse.json({ error: 'Unauthorized administrator access' }, { status: 401 });
+  }
+
   const adminSupabase = createAdminSupabaseClient();
   if (!adminSupabase) {
     return NextResponse.json({ error: 'Supabase client unavailable' }, { status: 500 });
@@ -148,6 +154,3 @@ export async function POST() {
   });
 }
 
-export async function GET() {
-  return POST();
-}

@@ -58,6 +58,10 @@ export default function Footer({
             >
               <picture>
                 <source
+                  type="image/webp"
+                  srcSet="/images/village_logo_icon.webp"
+                />
+                <source
                   media="(max-width: 767px)"
                   type="image/svg+xml"
                   srcSet="/images/village_logo_icon.svg"
