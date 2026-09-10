@@ -6,8 +6,24 @@ export default function ServiceWorkerRegister() {
   useEffect(() => {
     // Only register service worker in browser environments supporting it
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // Don't register on admin routes to prevent any caching of administrative views
-      if (window.location.pathname.startsWith('/admin')) {
+      // In local development, unregister any active service worker so local dev CSS/HMR never gets cached or broken
+      if (
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.pathname.startsWith('/admin')
+      ) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const reg of registrations) {
+            reg.unregister();
+          }
+        });
+        if ('caches' in window) {
+          caches.keys().then((names) => {
+            for (const name of names) {
+              caches.delete(name);
+            }
+          });
+        }
         return;
       }
 

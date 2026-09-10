@@ -46,7 +46,13 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // 1. Only intercept GET requests
+  // 1. In local development (localhost / 127.0.0.1), bypass service worker completely
+  // to avoid caching unbundled dev CSS, HMR chunks, or colliding with next build/dev
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    return;
+  }
+
+  // 2. Only intercept GET requests
   if (request.method !== 'GET') return;
 
   // 2. NEVER cache admin routes, login, dev server HMR, or private APIs

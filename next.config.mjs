@@ -1,17 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  webpack: (config, { dev }) => {
-    if (dev) {
-      config.cache = {
-        type: 'filesystem',
-        buildDependencies: {
-          config: [process.cwd() + '/next.config.mjs'],
-        },
-      };
-    }
-    return config;
-  },
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000,
