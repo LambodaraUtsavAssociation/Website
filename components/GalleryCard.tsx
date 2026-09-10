@@ -11,6 +11,7 @@ interface GalleryCardProps {
   onSelect: (memory: Memory) => void;
   priority?: boolean;
   index?: number;
+  variant?: 'standard' | 'reels';
 }
 
 export default function GalleryCard({
@@ -18,6 +19,7 @@ export default function GalleryCard({
   onSelect,
   priority = false,
   index = 0,
+  variant = 'standard',
 }: GalleryCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -64,6 +66,43 @@ export default function GalleryCard({
       }
     }
   };
+
+  // Dedicated Instagram Reels / Media Grid Variant (Full bleed, tight grid, zero video icons)
+  if (variant === 'reels') {
+    return (
+      <div
+        onClick={() => onSelect(memory)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="relative overflow-hidden bg-charcoal-950 aspect-[3/4] sm:aspect-[4/5] w-full group cursor-pointer select-none rounded-none sm:rounded-sm border-0 transition-all duration-300"
+      >
+        <SafeMediaImage
+          src={cardImageUrl}
+          poster={mediaInfo.poster}
+          alt={memory.title}
+          fill
+          priority={priority}
+          sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 25vw"
+          className={`object-cover object-center transition-transform duration-500 group-hover:scale-105 ${
+            isLoaded ? 'opacity-100 blur-0' : 'opacity-90 blur-sm'
+          }`}
+          onLoad={() => setIsLoaded(true)}
+        />
+
+        {/* Subtle Bottom Vignette on Hover with Title */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2.5 sm:p-3 pointer-events-none z-10">
+          <p className="font-sans text-[11px] sm:text-xs font-semibold text-ivory-50 line-clamp-2 leading-snug drop-shadow-md">
+            {memory.title}
+          </p>
+          {memory.category && (
+            <span className="text-[10px] text-gold-400 font-sans tracking-wide mt-0.5">
+              {memory.category.name}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FestivalYear, Memory } from '@/types';
 import CountdownClock from './CountdownClock';
 import SafeMediaImage from './SafeMediaImage';
+import GoldenEmbersCanvas from './GoldenEmbersCanvas';
 import { getHeroBucketMedia } from '@/lib/data/repository';
 
 interface HeroSectionProps {
@@ -129,6 +130,9 @@ export default function HeroSection({
 
         {/* Dark Gradient Overlay for Readability */}
         <div className="absolute inset-0 z-20 bg-gradient-to-t from-charcoal-950 via-charcoal-950/50 to-black/30 pointer-events-none" />
+
+        {/* Floating Sacred Golden Embers */}
+        <GoldenEmbersCanvas />
       </div>
 
       {/* Hero Content — Adjusted to Bottom-Left on Mobile & Centered on Desktop */}

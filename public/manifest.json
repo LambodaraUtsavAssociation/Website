@@ -1,0 +1,33 @@
+{
+  "name": "Lambodara Utsav Association - Papi Reddy Palli",
+  "short_name": "Lambodara Utsav",
+  "description": "Permanent cinematic digital gallery and sacred chronicles preserving the Vinayaka Chavithi celebrations of Papi Reddy Palli.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0d",
+  "theme_color": "#0a0a0d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/village_logo_icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/village_logo_icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/village_logo_icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "culture", "entertainment"],
+  "lang": "en",
+  "dir": "ltr"
+}

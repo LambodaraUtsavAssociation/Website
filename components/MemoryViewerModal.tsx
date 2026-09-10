@@ -15,6 +15,7 @@ import {
 import { Memory } from '@/types';
 import SafeMediaImage from './SafeMediaImage';
 import { getMediaDisplayInfo } from '@/lib/mediaUtils';
+import confetti from 'canvas-confetti';
 
 interface MemoryViewerModalProps {
   memories: Memory[];
@@ -217,6 +218,34 @@ export default function MemoryViewerModal({
       localStorage.setItem('blessed_memories', JSON.stringify(updatedLiked));
     } catch {
       // Ignore
+    }
+
+    if (newLikedState) {
+      // Mobile Haptic Vibration
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate([15, 35, 15]);
+        } catch {
+          // Ignore
+        }
+      }
+
+      // Sacred Marigold & Rose Petal Shower Burst
+      try {
+        confetti({
+          particleCount: 36,
+          spread: 60,
+          origin: { y: 0.78 },
+          colors: ['#E07A5F', '#C59B27', '#FFB703', '#F4A261', '#E76F51'],
+          shapes: ['circle'],
+          scalar: 0.95,
+          ticks: 120,
+          gravity: 1.1,
+          decay: 0.94,
+        });
+      } catch {
+        // Ignore
+      }
     }
 
     // 2. Optimistic Count update
@@ -441,6 +470,22 @@ export default function MemoryViewerModal({
                 {copied ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-400" /> : <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-400" />}
                 <span>{copied ? 'Copied' : 'Share'}</span>
               </button>
+
+              {/* WhatsApp 1-Tap Devotional Share */}
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                  `🙏 Jai Ganesha! Blessed moment from ${associationName}, ${villageName}: "${currentMemory.title}"\n${typeof window !== 'undefined' ? window.location.href : ''}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-xs font-bold text-emerald-300 hover:text-emerald-200 hover:border-emerald-400 flex items-center justify-center space-x-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                title="Share to WhatsApp"
+              >
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.983.538 1.895.845 2.791.846h.005c3.182 0 5.768-2.587 5.769-5.766.001-3.182-2.585-5.768-5.766-5.768zm0-2.172c4.418 0 8 3.582 8 8 0 1.547-.442 3.013-1.258 4.298l1.227 4.702-4.819-1.263c-1.229.742-2.656 1.163-4.15 1.163-4.418 0-8-3.582-8-8s3.582-8 8-8z"/>
+                </svg>
+                <span className="hidden sm:inline">WhatsApp</span>
+              </a>
             </div>
 
             {/* Right: Prev / Next Navigation Arrows */}

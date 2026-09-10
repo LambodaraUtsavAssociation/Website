@@ -15,13 +15,23 @@ export default function ServiceWorkerRegister() {
         navigator.serviceWorker
           .register('/sw.js')
           .then((registration) => {
-            // Check for updates periodically
+            // Immediately check for updates on launch
+            registration.update().catch(() => {});
+
+            // Check for production updates whenever user re-opens or switches back to the app
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') {
+                registration.update().catch(() => {});
+              }
+            });
+
+            // Listen for new worker installation
             registration.onupdatefound = () => {
               const installingWorker = registration.installing;
               if (installingWorker) {
                 installingWorker.onstatechange = () => {
                   if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // New content available
+                    console.info('Lambodara Utsav: New version installed in background.');
                   }
                 };
               }

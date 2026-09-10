@@ -8,6 +8,7 @@ import {
   getCategories,
   getMemories,
   getFeaturedVideo,
+  getHeroBucketMedia,
 } from '@/lib/data/repository';
 
 import HeroSection from '@/components/HeroSection';
@@ -15,6 +16,7 @@ import FestivalIntroSection from '@/components/FestivalIntroSection';
 import CelebrationChaptersSection from '@/components/CelebrationChaptersSection';
 import ArchiveYearsSection from '@/components/ArchiveYearsSection';
 import MemoryViewerModal from '@/components/MemoryViewerModal';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 
 const INAUGURAL_2026_YEAR: FestivalYear = {
   id: '2026-inaugural-id',
@@ -32,6 +34,7 @@ export default function HomePage() {
   const [allYears, setAllYears] = useState<FestivalYear[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [allMemories, setAllMemories] = useState<Memory[]>([]);
+  const [heroBucketMedia, setHeroBucketMedia] = useState<{ url: string }[]>([]);
   const [featuredVideo, setFeaturedVideo] = useState<Memory | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,10 +44,11 @@ export default function HomePage() {
 
     async function loadData() {
       try {
-        const [years, cats, memories] = await Promise.all([
+        const [years, cats, memories, heroMedia] = await Promise.all([
           getFestivalYears(true),
           getCategories(),
           getMemories({ onlyPublished: true }),
+          getHeroBucketMedia().catch(() => []),
         ]);
 
         if (!isMounted) return;
@@ -52,6 +56,7 @@ export default function HomePage() {
         setAllYears(years);
         setCategories(cats);
         setAllMemories(memories);
+        setHeroBucketMedia(heroMedia || []);
 
         // Derive active year without an extra query
         const activeYear = years.find((y) => y.slug === '2026' || y.year === 2026) || years[0] || null;
@@ -76,8 +81,21 @@ export default function HomePage() {
     };
   }, []);
 
+  const heroUrls = new Set(
+    (heroBucketMedia || []).map((h) => h.url).filter(Boolean)
+  );
+
+  // Filter out memories featured in the Hero section to prevent duplicate display in the gallery below
+  const galleryMemories = allMemories.filter((m) => {
+    if (m.is_featured) return false;
+    if (m.storage_path && heroUrls.has(m.storage_path)) return false;
+    if (m.full_path && heroUrls.has(m.full_path)) return false;
+    if (m.thumbnail_path && heroUrls.has(m.thumbnail_path)) return false;
+    return true;
+  });
+
   const handleSelectMemory = (memory: Memory) => {
-    const idx = allMemories.findIndex((m) => m.id === memory.id);
+    const idx = galleryMemories.findIndex((m) => m.id === memory.id);
     if (idx !== -1) {
       setSelectedIndex(idx);
     }
@@ -87,16 +105,16 @@ export default function HomePage() {
 
   return (
     <div className="w-full">
-      {/* Hero Section — Always renders immediately on initial load */}
+      {/* Hero Section — Uses allMemories to pick featured hero media */}
       <HeroSection festivalYear={activeYearObj} memories={allMemories} />
 
       {/* Festival Introduction */}
       <FestivalIntroSection activeYear={activeYearObj} />
 
-      {/* Celebration Chapters Timeline */}
+      {/* Celebration Chapters Timeline — Excludes Hero featured images */}
       <CelebrationChaptersSection
         categories={categories}
-        memories={allMemories}
+        memories={galleryMemories}
         onSelectMemory={handleSelectMemory}
         isLoading={isLoading}
       />
@@ -106,11 +124,14 @@ export default function HomePage() {
 
       {/* Fullscreen Lightbox Modal */}
       <MemoryViewerModal
-        memories={allMemories}
+        memories={galleryMemories}
         selectedIndex={selectedIndex}
         onClose={() => setSelectedIndex(null)}
         onNavigate={(newIdx) => setSelectedIndex(newIdx)}
       />
+
+      {/* PWA Mobile Installation Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }

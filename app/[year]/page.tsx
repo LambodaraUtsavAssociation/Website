@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Filter } from 'lucide-react';
 import { FestivalYear, Category, Memory } from '@/types';
-import { getFestivalYearBySlug, getCategories, getMemories } from '@/lib/data/repository';
+import { getFestivalYearBySlug, getCategories, getMemories, getHeroBucketMedia } from '@/lib/data/repository';
 import GalleryCard from '@/components/GalleryCard';
 import MemoryViewerModal from '@/components/MemoryViewerModal';
 import CustomDropdown, { DropdownOption } from '@/components/CustomDropdown';
@@ -38,14 +38,29 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
 
         setYearData(yearObj);
 
-        const [cats, mems] = await Promise.all([
+        const [cats, mems, heroBucketMedia] = await Promise.all([
           getCategories(),
           getMemories({ yearId: yearObj.id, onlyPublished: true }),
+          getHeroBucketMedia().catch(() => []),
         ]);
 
         if (!isMounted) return;
         setCategories(cats);
-        setMemories(mems);
+
+        const heroUrls = new Set(
+          (heroBucketMedia || []).map((h) => h.url).filter(Boolean)
+        );
+
+        // Filter out hero section featured memories to prevent duplicate display in the gallery
+        const nonHeroMemories = mems.filter((m) => {
+          if (m.is_featured) return false;
+          if (m.storage_path && heroUrls.has(m.storage_path)) return false;
+          if (m.full_path && heroUrls.has(m.full_path)) return false;
+          if (m.thumbnail_path && heroUrls.has(m.thumbnail_path)) return false;
+          return true;
+        });
+
+        setMemories(nonHeroMemories);
       } catch (err) {
         console.error('Failed to load year memories:', err);
       } finally {
@@ -128,9 +143,9 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
   return (
     <div className="min-h-screen pt-28 pb-20">
       {/* Main Gallery Area */}
-      <div className="relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-30 max-w-7xl mx-auto px-1 sm:px-6 lg:px-8">
         {/* Compact Gallery Header with Borderless Filter Icon Trigger */}
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-charcoal-800/80">
+        <div className="flex items-center justify-between mb-6 pb-4 px-2 sm:px-0 border-b border-charcoal-800/80">
           <span className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-400">
             Digital Gallery Archive &bull; {params.year}
           </span>
@@ -144,19 +159,20 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
           />
         </div>
 
-        {/* Instagram Profile Style Gallery Grid */}
+        {/* Instagram / Reels Style Media Grid (4-col Web, 3-col Mobile, tight gap, zero video icons) */}
         {isLoading ? (
           <div className="py-24 flex items-center justify-center">
             <RatLoader message={`Loading ${params.year} Memories...`} />
           </div>
         ) : filteredMemories.length > 0 ? (
-          <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-0.5 sm:gap-5 items-stretch w-full">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 items-stretch w-full">
             {filteredMemories.map((memory, index) => (
               <GalleryCard
                 key={memory.id}
                 memory={memory}
                 index={index}
-                priority={index < 4}
+                priority={index < 8}
+                variant="reels"
                 onSelect={(selected) => {
                   const actualIndex = filteredMemories.findIndex((m) => m.id === selected.id);
                   setSelectedIndex(actualIndex);

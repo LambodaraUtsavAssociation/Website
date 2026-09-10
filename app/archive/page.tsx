@@ -295,7 +295,6 @@ export default function ArchivePage() {
                         className="w-full flex items-center justify-center gap-2.5 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-ivory-50 bg-gradient-to-r from-saffron-700 via-saffron-600 to-saffron-700 border-b-2 border-gold-400 shadow-glow-saffron hover:brightness-110 active:translate-y-0.5 transition-all text-center rounded-lg"
                       >
                         <span>Enter {featuredYear.year} Gallery</span>
-                        <ArrowRight className="w-4 h-4 text-gold-300" />
                       </Link>
                     </div>
                   </div>
@@ -408,7 +407,7 @@ export default function ArchivePage() {
                               {y.memory_count} Moments
                             </span>
                             <span className="inline-flex items-center gap-1 text-gold-400 font-semibold uppercase tracking-wider text-[10px] group-hover:translate-x-1 transition-transform">
-                              Explore &rarr;
+                              Explore
                             </span>
                           </div>
                         </div>
