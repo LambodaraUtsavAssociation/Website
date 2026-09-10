@@ -41,7 +41,9 @@ async function uploadWithRetry(
 
     if ((isAbort || isNetwork) && attempt < MAX_RETRIES) {
       const backoffMs = Math.min(1000 * 2 ** (attempt - 1), 8000); // 1s, 2s, 4s
-      console.warn(`Upload attempt ${attempt} failed (${err?.name}). Retrying in ${backoffMs}ms...`);
+      console.warn(
+        `Upload attempt ${attempt} failed (${err?.name}). Retrying in ${backoffMs}ms...`
+      );
       await delay(backoffMs);
       return uploadWithRetry(signedUrl, file, contentType, attempt + 1);
     }
@@ -134,10 +136,7 @@ export interface R2UploadResult {
  * @param folder - R2 subfolder (e.g., 'photos', 'hero-media')
  * @returns Public R2 URL (both publicUrl and thumbnailUrl point to the same file)
  */
-export async function uploadImageToR2(
-  file: File,
-  folder = 'photos'
-): Promise<R2UploadResult> {
+export async function uploadImageToR2(file: File, folder = 'photos'): Promise<R2UploadResult> {
   // Step 1: Get presigned PUT URL + final public URL from our API route
   const paramRes = await fetch('/api/admin/r2/upload-url', {
     method: 'POST',

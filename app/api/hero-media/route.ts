@@ -15,8 +15,9 @@ interface HeroItemWithMeta {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const includeAll = searchParams.get('all') === 'true' || searchParams.get('onlyPublished') === 'false';
-  
+  const includeAll =
+    searchParams.get('all') === 'true' || searchParams.get('onlyPublished') === 'false';
+
   const rawItems: HeroItemWithMeta[] = [];
 
   // 1. Query Supabase Database for featured Cloudflare R2 photo memories and hero_media
@@ -53,7 +54,10 @@ export async function GET(request: NextRequest) {
       }
 
       // B. Query hero_media table
-      let query = adminSupabase.from('hero_media').select('*').order('display_order', { ascending: true });
+      let query = adminSupabase
+        .from('hero_media')
+        .select('*')
+        .order('display_order', { ascending: true });
       if (!includeAll) {
         query = query.eq('is_active', true);
       }

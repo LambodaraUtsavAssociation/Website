@@ -53,7 +53,9 @@ const TARGET_ADMIN_EMAIL = (
   process.env.ADMIN_EMAIL ||
   process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
   'vinayakachavithiprp@gmail.com'
-).trim().toLowerCase();
+)
+  .trim()
+  .toLowerCase();
 
 export async function validateSupabaseAuth(
   email: string,

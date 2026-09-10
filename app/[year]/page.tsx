@@ -4,7 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Filter } from 'lucide-react';
 import { FestivalYear, Category, Memory } from '@/types';
-import { getFestivalYearBySlug, getCategories, getMemories, getHeroBucketMedia } from '@/lib/data/repository';
+import {
+  getFestivalYearBySlug,
+  getCategories,
+  getMemories,
+  getHeroBucketMedia,
+} from '@/lib/data/repository';
 import GalleryCard from '@/components/GalleryCard';
 import MemoryViewerModal from '@/components/MemoryViewerModal';
 import CustomDropdown, { DropdownOption } from '@/components/CustomDropdown';
@@ -47,9 +52,7 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
         if (!isMounted) return;
         setCategories(cats);
 
-        const heroUrls = new Set(
-          (heroBucketMedia || []).map((h) => h.url).filter(Boolean)
-        );
+        const heroUrls = new Set((heroBucketMedia || []).map((h) => h.url).filter(Boolean));
 
         // Filter out hero section featured memories to prevent duplicate display in the gallery
         const nonHeroMemories = mems.filter((m) => {
@@ -79,7 +82,8 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 pt-24">
         <h1 className="font-editorial text-4xl text-ivory-50 mb-3">Festival Year Not Found</h1>
         <p className="text-sm text-ivory-400 max-w-md mb-6">
-          The requested year &ldquo;{params.year}&rdquo; is not yet published in our village digital gallery.
+          The requested year &ldquo;{params.year}&rdquo; is not yet published in our village digital
+          gallery.
         </p>
         <Link
           href="/"
@@ -98,7 +102,12 @@ export default function FestivalYearPage({ params }: { params: { year: string } 
   });
 
   const singleFilterOptions: DropdownOption[] = [
-    { value: 'all', label: `All ${yearData?.year || params.year} Memories`, count: memories.length, isGroupHeader: true },
+    {
+      value: 'all',
+      label: `All ${yearData?.year || params.year} Memories`,
+      count: memories.length,
+      isGroupHeader: true,
+    },
   ];
 
   categories.forEach((cat) => {

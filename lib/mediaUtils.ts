@@ -43,7 +43,14 @@ export interface MediaDisplayInfo {
  * 3. Otherwise → image from thumbnail_path or storage_path (Cloudinary or Supabase)
  */
 export function getMediaDisplayInfo(
-  memory: Partial<Memory> | { thumbnail_path?: string | null; storage_path?: string | null; media_type?: string | null; youtube_video_id?: string | null }
+  memory:
+    | Partial<Memory>
+    | {
+        thumbnail_path?: string | null;
+        storage_path?: string | null;
+        media_type?: string | null;
+        youtube_video_id?: string | null;
+      }
 ): MediaDisplayInfo {
   const storageUrl = memory.storage_path || '';
   const thumbUrl = memory.thumbnail_path || '';
@@ -51,18 +58,24 @@ export function getMediaDisplayInfo(
   // Extract YouTube ID if set or embedded in any path
   const detectedYouTubeId =
     memory.youtube_video_id ||
-    (typeof storageUrl === 'string' && storageUrl.includes('youtu') ? extractYouTubeId(storageUrl) : null) ||
-    (typeof thumbUrl === 'string' && thumbUrl.includes('youtu') ? extractYouTubeId(thumbUrl) : null);
+    (typeof storageUrl === 'string' && storageUrl.includes('youtu')
+      ? extractYouTubeId(storageUrl)
+      : null) ||
+    (typeof thumbUrl === 'string' && thumbUrl.includes('youtu')
+      ? extractYouTubeId(thumbUrl)
+      : null);
 
-  const isVideoMedia = memory.media_type === 'video' || isVideoUrl(storageUrl) || !!detectedYouTubeId;
+  const isVideoMedia =
+    memory.media_type === 'video' || isVideoUrl(storageUrl) || !!detectedYouTubeId;
 
   // ── YouTube-embedded video (Zero-Lag Facade Pattern) ───────────────────────
   if (detectedYouTubeId) {
     const videoId = detectedYouTubeId;
     // Guaranteed to exist for 100% of YouTube videos (unlike maxresdefault which 404s on 480p/shorts)
     const validThumb =
-      (thumbUrl && !thumbUrl.includes('youtube.com/embed') && !isVideoUrl(thumbUrl) ? thumbUrl : null) ||
-      getYouTubeThumbnail(videoId, 'hq');
+      (thumbUrl && !thumbUrl.includes('youtube.com/embed') && !isVideoUrl(thumbUrl)
+        ? thumbUrl
+        : null) || getYouTubeThumbnail(videoId, 'hq');
 
     return {
       url: getYouTubeEmbedUrl(videoId),
@@ -77,7 +90,11 @@ export function getMediaDisplayInfo(
 
   // ── Supabase-stored legacy video (backward compat) ──────────────────────────
   if (isVideoMedia) {
-    const videoUrl = isVideoUrl(storageUrl) ? storageUrl : (isVideoUrl(thumbUrl) ? thumbUrl : (storageUrl || thumbUrl));
+    const videoUrl = isVideoUrl(storageUrl)
+      ? storageUrl
+      : isVideoUrl(thumbUrl)
+        ? thumbUrl
+        : storageUrl || thumbUrl;
     const posterUrl = thumbUrl && !isVideoUrl(thumbUrl) ? thumbUrl : undefined;
 
     return {
@@ -100,7 +117,6 @@ export function getMediaDisplayInfo(
     isYouTube: false,
   };
 }
-
 
 /**
  * Returns a Pinterest-style Tailwind aspect ratio class for staggered masonry layout.

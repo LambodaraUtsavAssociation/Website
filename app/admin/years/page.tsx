@@ -188,7 +188,10 @@ export default function AdminYearsPage() {
         body: JSON.stringify({ is_published: nextState }),
       });
       if (res.ok) {
-        toast.info('Publish State Updated', `"${y.title}" is now ${nextState ? 'Published' : 'Draft'}.`);
+        toast.info(
+          'Publish State Updated',
+          `"${y.title}" is now ${nextState ? 'Published' : 'Draft'}.`
+        );
       } else {
         throw new Error('Update failed');
       }
@@ -219,7 +222,8 @@ export default function AdminYearsPage() {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                Manage annual celebration archives. Each year organizes memories and chapters into a sacred timeline.
+                Manage annual celebration archives. Each year organizes memories and chapters into a
+                sacred timeline.
               </p>
             </div>
 
@@ -286,9 +290,7 @@ export default function AdminYearsPage() {
 
                     {/* Title in bottom of banner */}
                     <div className="absolute bottom-3 left-3 right-3 text-white">
-                      <h3 className="font-editorial text-base font-bold truncate">
-                        {y.title}
-                      </h3>
+                      <h3 className="font-editorial text-base font-bold truncate">{y.title}</h3>
                       {y.telugu_title && (
                         <p className="text-xs text-amber-200 font-medium truncate">
                           {y.telugu_title}
@@ -300,13 +302,12 @@ export default function AdminYearsPage() {
                   {/* Body Content */}
                   <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                     <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
-                      {y.description || 'Annual celebration edition preserved in digital memory library.'}
+                      {y.description ||
+                        'Annual celebration edition preserved in digital memory library.'}
                     </p>
 
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        slug: /{y.slug}
-                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">slug: /{y.slug}</span>
 
                       <div className="flex items-center space-x-1.5">
                         <button
@@ -428,8 +429,12 @@ export default function AdminYearsPage() {
                     {uploadingCover ? (
                       <div className="w-full h-36 rounded-2xl border-2 border-dashed border-orange-400 bg-orange-50/50 flex flex-col items-center justify-center space-y-2">
                         <Loader2 className="w-7 h-7 text-orange-600 animate-spin" />
-                        <span className="text-xs font-bold text-orange-900">Uploading to Cloudflare R2...</span>
-                        <span className="text-[10px] text-orange-600">Uploading directly from browser to R2 bucket</span>
+                        <span className="text-xs font-bold text-orange-900">
+                          Uploading to Cloudflare R2...
+                        </span>
+                        <span className="text-[10px] text-orange-600">
+                          Uploading directly from browser to R2 bucket
+                        </span>
                       </div>
                     ) : coverUrl ? (
                       <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 group shadow-xs">
@@ -499,7 +504,10 @@ export default function AdminYearsPage() {
                             if (e.target.files?.[0]) handleCoverFileUpload(e.target.files[0]);
                           }}
                         />
-                        <label htmlFor="festivalCoverInput" className="cursor-pointer flex flex-col items-center w-full">
+                        <label
+                          htmlFor="festivalCoverInput"
+                          className="cursor-pointer flex flex-col items-center w-full"
+                        >
                           <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mb-2 shadow-xs">
                             <Upload className="w-5 h-5" />
                           </div>
@@ -535,7 +543,10 @@ export default function AdminYearsPage() {
                       onChange={(e) => setIsPublished(e.target.checked)}
                       className="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-slate-300"
                     />
-                    <label htmlFor="yearPublished" className="text-xs font-bold text-slate-800 cursor-pointer">
+                    <label
+                      htmlFor="yearPublished"
+                      className="text-xs font-bold text-slate-800 cursor-pointer"
+                    >
                       Published (Visible in festival archive timeline)
                     </label>
                   </div>
@@ -580,9 +591,12 @@ export default function AdminYearsPage() {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
               <div className="w-full max-w-sm p-6 rounded-3xl border-2 border-rose-500 bg-white text-center space-y-4 shadow-2xl">
                 <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
-                <h3 className="font-editorial text-2xl text-slate-900 font-bold">Confirm Deletion</h3>
+                <h3 className="font-editorial text-2xl text-slate-900 font-bold">
+                  Confirm Deletion
+                </h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Deleting this festival year will permanently remove all associated memories and metadata. Are you sure?
+                  Deleting this festival year will permanently remove all associated memories and
+                  metadata. Are you sure?
                 </p>
                 <div className="flex items-center justify-center space-x-2.5 pt-2">
                   <button

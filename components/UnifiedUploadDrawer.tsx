@@ -44,7 +44,10 @@ export default function UnifiedUploadDrawer({
   const [photoItems, setPhotoItems] = useState<QuickPhotoItem[]>([]);
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [youtubeTitle, setYoutubeTitle] = useState('');
-  const [youtubePreview, setYoutubePreview] = useState<{ videoId: string; thumbnailUrl: string } | null>(null);
+  const [youtubePreview, setYoutubePreview] = useState<{
+    videoId: string;
+    thumbnailUrl: string;
+  } | null>(null);
 
   // Metadata
   const [years, setYears] = useState<FestivalYear[]>([]);
@@ -191,7 +194,10 @@ export default function UnifiedUploadDrawer({
     }
   };
 
-  const yearOptions: DropdownOption[] = years.map((y) => ({ value: y.id, label: `${y.year} - ${y.title}` }));
+  const yearOptions: DropdownOption[] = years.map((y) => ({
+    value: y.id,
+    label: `${y.year} - ${y.title}`,
+  }));
   const categoryOptions: DropdownOption[] = categories.map((c) => ({ value: c.id, label: c.name }));
 
   if (!isOpen) return null;
@@ -202,7 +208,9 @@ export default function UnifiedUploadDrawer({
         <div className="flex items-center justify-between pb-3 border-b border-orange-100">
           <div>
             <h3 className="font-editorial text-xl font-bold text-slate-900">Quick Upload Media</h3>
-            <p className="text-xs text-slate-500">Single Source of Truth: Cloudflare R2 &amp; YouTube</p>
+            <p className="text-xs text-slate-500">
+              Single Source of Truth: Cloudflare R2 &amp; YouTube
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -244,12 +252,26 @@ export default function UnifiedUploadDrawer({
         {/* Metadata */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Festival Year</label>
-            <CustomDropdown options={yearOptions} value={selectedYearId} onChange={setSelectedYearId} lightMode={true} />
+            <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+              Festival Year
+            </label>
+            <CustomDropdown
+              options={yearOptions}
+              value={selectedYearId}
+              onChange={setSelectedYearId}
+              lightMode={true}
+            />
           </div>
           <div>
-            <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Category</label>
-            <CustomDropdown options={categoryOptions} value={selectedCategoryId} onChange={setSelectedCategoryId} lightMode={true} />
+            <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+              Category
+            </label>
+            <CustomDropdown
+              options={categoryOptions}
+              value={selectedCategoryId}
+              onChange={setSelectedCategoryId}
+              lightMode={true}
+            />
           </div>
         </div>
 
@@ -263,7 +285,10 @@ export default function UnifiedUploadDrawer({
               onChange={(e) => setIsFeaturedHero(e.target.checked)}
               className="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-amber-300"
             />
-            <label htmlFor="drawerHeroToggle" className="text-xs font-bold text-slate-800 cursor-pointer select-none flex items-center space-x-1">
+            <label
+              htmlFor="drawerHeroToggle"
+              className="text-xs font-bold text-slate-800 cursor-pointer select-none flex items-center space-x-1"
+            >
               <Sparkles className="w-3 h-3 text-amber-600 fill-amber-600" />
               <span>Feature in Homepage Hero Carousel</span>
             </label>
@@ -293,7 +318,10 @@ export default function UnifiedUploadDrawer({
             {photoItems.length > 0 && (
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {photoItems.map((item, idx) => (
-                  <div key={item.id} className="p-2 rounded-xl border border-slate-200 flex items-center space-x-2 bg-slate-50">
+                  <div
+                    key={item.id}
+                    className="p-2 rounded-xl border border-slate-200 flex items-center space-x-2 bg-slate-50"
+                  >
                     <img src={item.previewUrl} alt="" className="w-10 h-8 object-cover rounded" />
                     <input
                       type="text"
@@ -323,7 +351,9 @@ export default function UnifiedUploadDrawer({
         {activeTab === 'videos' && (
           <div className="space-y-3">
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">YouTube Link</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                YouTube Link
+              </label>
               <input
                 type="text"
                 placeholder="https://www.youtube.com/watch?v=..."
@@ -336,17 +366,25 @@ export default function UnifiedUploadDrawer({
             {youtubePreview && (
               <div className="flex items-center space-x-2.5 p-2 rounded-xl bg-red-50 border border-red-200">
                 <div className="relative w-16 h-10 rounded overflow-hidden bg-black flex-shrink-0">
-                  <img src={youtubePreview.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={youtubePreview.thumbnailUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Play className="w-3.5 h-3.5 text-white fill-white" />
                   </div>
                 </div>
-                <span className="text-[11px] text-red-700 font-bold">YouTube Video ID: {youtubePreview.videoId}</span>
+                <span className="text-[11px] text-red-700 font-bold">
+                  YouTube Video ID: {youtubePreview.videoId}
+                </span>
               </div>
             )}
 
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Video Title</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Video Title
+              </label>
               <input
                 type="text"
                 placeholder="Festival Celebration Aarti..."
@@ -379,7 +417,9 @@ export default function UnifiedUploadDrawer({
             onClick={executeUpload}
             disabled={uploading}
             className={`px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md cursor-pointer ${
-              activeTab === 'photos' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-red-600 hover:bg-red-500'
+              activeTab === 'photos'
+                ? 'bg-blue-600 hover:bg-blue-500'
+                : 'bg-red-600 hover:bg-red-500'
             }`}
           >
             {uploading ? 'Processing...' : activeTab === 'photos' ? 'Upload Photos' : 'Save Video'}

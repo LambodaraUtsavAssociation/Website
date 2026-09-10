@@ -39,13 +39,15 @@ export async function POST(request: NextRequest) {
       const adminSupabase = createAdminSupabaseClient();
       if (adminSupabase) {
         try {
-          await adminSupabase.from('hero_media').insert([{
-            url: directUrl,
-            caption: caption || 'Hero Visual Slide',
-            alt: caption || 'Hero Visual Slide',
-            is_active: true,
-            display_order: 1,
-          }]);
+          await adminSupabase.from('hero_media').insert([
+            {
+              url: directUrl,
+              caption: caption || 'Hero Visual Slide',
+              alt: caption || 'Hero Visual Slide',
+              is_active: true,
+              display_order: 1,
+            },
+          ]);
         } catch (dbErr) {
           console.warn('Hero media insert warning:', dbErr);
         }
@@ -105,13 +107,15 @@ export async function POST(request: NextRequest) {
     const adminSupabase = createAdminSupabaseClient();
     if (adminSupabase) {
       try {
-        await adminSupabase.from('hero_media').insert([{
-          url: publicUrl,
-          caption: caption || sanitizedName,
-          alt: caption || sanitizedName,
-          is_active: true,
-          display_order: 1,
-        }]);
+        await adminSupabase.from('hero_media').insert([
+          {
+            url: publicUrl,
+            caption: caption || sanitizedName,
+            alt: caption || sanitizedName,
+            is_active: true,
+            display_order: 1,
+          },
+        ]);
       } catch (dbErr) {
         console.warn('Hero media DB insert warning:', dbErr);
       }
@@ -136,6 +140,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: any) {
     console.error('Hero upload error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to upload hero media' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Failed to upload hero media' },
+      { status: 500 }
+    );
   }
 }

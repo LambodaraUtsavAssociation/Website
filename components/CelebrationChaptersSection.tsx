@@ -28,7 +28,9 @@ export default function CelebrationChaptersSection({
           Chapters of Devotion & Tradition
         </h2>
         <p className="text-sm sm:text-base text-ivory-300/80 leading-relaxed font-sans max-w-2xl mx-auto">
-          Follow our village&rsquo;s sacred journey from early mandap flower preparations and clay idol consecration to daily Veda parayanam, evening Anna Prasadam distribution, and the grand lake immersion.
+          Follow our village&rsquo;s sacred journey from early mandap flower preparations and clay
+          idol consecration to daily Veda parayanam, evening Anna Prasadam distribution, and the
+          grand lake immersion.
         </p>
       </div>
 
@@ -52,8 +54,12 @@ export default function CelebrationChaptersSection({
         </div>
       ) : (
         <div className="text-center py-16 border border-charcoal-800 max-w-md mx-auto bg-charcoal-900/50 rounded-2xl">
-          <p className="text-sm text-ivory-300 font-semibold mb-1">No moments uploaded for this section yet.</p>
-          <p className="text-xs text-ivory-400 font-sans">Photos and videos uploaded by our village administrator will appear here live.</p>
+          <p className="text-sm text-ivory-300 font-semibold mb-1">
+            No moments uploaded for this section yet.
+          </p>
+          <p className="text-xs text-ivory-400 font-sans">
+            Photos and videos uploaded by our village administrator will appear here live.
+          </p>
         </div>
       )}
 

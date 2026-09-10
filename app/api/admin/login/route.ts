@@ -7,7 +7,8 @@ import { logAdminAuthAttempt } from '@/lib/authLogger';
 const attemptsMap = new Map<string, { count: number; resetAt: number }>();
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+  const ip =
+    request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
   const userAgent = request.headers.get('user-agent') || 'Unknown';
   const now = Date.now();
 
@@ -46,10 +47,7 @@ export async function POST(request: NextRequest) {
         failure_reason: errorMsg,
       });
 
-      return NextResponse.json(
-        { error: errorMsg },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
     }
 
     const { email, password } = result.data;
@@ -68,10 +66,7 @@ export async function POST(request: NextRequest) {
         failure_reason: reason,
       });
 
-      return NextResponse.json(
-        { error: reason },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: reason }, { status: 401 });
     }
 
     // Success: record audit log, clear rate limit, and set HTTP-only session cookie

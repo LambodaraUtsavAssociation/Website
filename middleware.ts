@@ -29,7 +29,9 @@ export function middleware(request: NextRequest) {
   if (isAdminHost) {
     // Root '/' on admin domain goes straight to admin dashboard or login
     if (pathname === '/') {
-      return NextResponse.redirect(new URL(isAuthenticated ? '/admin' : '/admin/login', request.url));
+      return NextResponse.redirect(
+        new URL(isAuthenticated ? '/admin' : '/admin/login', request.url)
+      );
     }
   } else if (adminDomain && pathname.startsWith('/admin')) {
     // 2. Domain Separation: If trying to access /admin on Public Website Domain while ADMIN_DOMAIN is set

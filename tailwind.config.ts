@@ -43,7 +43,7 @@ const config: Config = {
           500: '#d4af37',
           600: '#b89326',
           700: '#94731a',
-        }
+        },
       },
       fontFamily: {
         serif: ['var(--font-cinzel)', 'Georgia', 'serif'],
@@ -66,8 +66,8 @@ const config: Config = {
         subtlePulse: {
           '0%, 100%': { opacity: '0.8', transform: 'scale(1)' },
           '50%': { opacity: '1', transform: 'scale(1.02)' },
-        }
-      }
+        },
+      },
     },
   },
   plugins: [],

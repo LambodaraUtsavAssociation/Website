@@ -126,7 +126,10 @@ function MemoriesContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderedIds }),
       });
-      toast.success('Sequence Reordered', `Moved "${moved.title}" to position #${targetIndex + 1}.`);
+      toast.success(
+        'Sequence Reordered',
+        `Moved "${moved.title}" to position #${targetIndex + 1}.`
+      );
     } catch {
       toast.error('Reorder Failed', 'Could not save new sequence order.');
     }
@@ -194,7 +197,10 @@ function MemoriesContent() {
         body: JSON.stringify({ is_published: nextState }),
       });
       if (res.ok) {
-        toast.info('Publication Updated', `"${m.title}" is now ${nextState ? 'Published' : 'Draft'}.`);
+        toast.info(
+          'Publication Updated',
+          `"${m.title}" is now ${nextState ? 'Published' : 'Draft'}.`
+        );
       } else {
         throw new Error('Failed to update');
       }
@@ -330,23 +336,29 @@ function MemoriesContent() {
   }, [memories, activeTab, selectedYearId, selectedCategoryId, debouncedSearchQuery]);
 
   // Dropdown options (memoized)
-  const yearOptions: DropdownOption[] = useMemo(() => [
-    { value: 'all', label: 'All Festival Years', count: memories.length },
-    ...years.map((y) => ({
-      value: y.id,
-      label: `${y.year} - ${y.title}`,
-      count: memories.filter((m) => m.festival_year_id === y.id).length,
-    })),
-  ], [years, memories]);
+  const yearOptions: DropdownOption[] = useMemo(
+    () => [
+      { value: 'all', label: 'All Festival Years', count: memories.length },
+      ...years.map((y) => ({
+        value: y.id,
+        label: `${y.year} - ${y.title}`,
+        count: memories.filter((m) => m.festival_year_id === y.id).length,
+      })),
+    ],
+    [years, memories]
+  );
 
-  const categoryOptions: DropdownOption[] = useMemo(() => [
-    { value: 'all', label: 'All Categories', count: memories.length },
-    ...categories.map((c) => ({
-      value: c.id,
-      label: c.name,
-      count: memories.filter((m) => m.category_id === c.id).length,
-    })),
-  ], [categories, memories]);
+  const categoryOptions: DropdownOption[] = useMemo(
+    () => [
+      { value: 'all', label: 'All Categories', count: memories.length },
+      ...categories.map((c) => ({
+        value: c.id,
+        label: c.name,
+        count: memories.filter((m) => m.category_id === c.id).length,
+      })),
+    ],
+    [categories, memories]
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
@@ -368,7 +380,8 @@ function MemoriesContent() {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 mt-0.5 sm:mt-1">
-                Single source of truth: Manage photos (Cloudflare R2), YouTube videos, and hero banner slides.
+                Single source of truth: Manage photos (Cloudflare R2), YouTube videos, and hero
+                banner slides.
               </p>
             </div>
           </div>
@@ -385,7 +398,9 @@ function MemoriesContent() {
             >
               <Layers className="w-3.5 h-3.5" />
               <span>All Media</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'}`}>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'}`}
+              >
                 {memories.length}
               </span>
             </button>
@@ -400,7 +415,9 @@ function MemoriesContent() {
             >
               <Camera className="w-3.5 h-3.5" />
               <span>📷 Photos (R2)</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'photos' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'}`}>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'photos' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'}`}
+              >
                 {photoCount}
               </span>
             </button>
@@ -415,7 +432,9 @@ function MemoriesContent() {
             >
               <Youtube className="w-3.5 h-3.5" />
               <span>🎬 YouTube Videos</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'videos' ? 'bg-red-700 text-red-100' : 'bg-slate-100 text-slate-600'}`}>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'videos' ? 'bg-red-700 text-red-100' : 'bg-slate-100 text-slate-600'}`}
+              >
                 {videoCount}
               </span>
             </button>
@@ -430,7 +449,9 @@ function MemoriesContent() {
             >
               <Sparkles className="w-3.5 h-3.5 fill-current" />
               <span>🌟 Hero Carousel</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'hero' ? 'bg-amber-600 text-amber-100' : 'bg-slate-100 text-slate-600'}`}>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'hero' ? 'bg-amber-600 text-amber-100' : 'bg-slate-100 text-slate-600'}`}
+              >
                 {heroCount}
               </span>
             </button>
@@ -554,7 +575,10 @@ function MemoriesContent() {
 
                     {/* Middle: Title & Metadata */}
                     <div className="p-3.5 pb-2">
-                      <h4 className="font-editorial text-sm font-bold text-slate-900 truncate" title={displayTitle}>
+                      <h4
+                        className="font-editorial text-sm font-bold text-slate-900 truncate"
+                        title={displayTitle}
+                      >
                         {displayTitle}
                       </h4>
                       {m.telugu_title && (
@@ -590,14 +614,20 @@ function MemoriesContent() {
                         {isPhoto ? (
                           <button
                             onClick={(e) => handleToggleHero(m, e)}
-                            title={m.is_featured ? 'Remove from Homepage Hero Banner' : 'Feature in Homepage Hero Banner'}
+                            title={
+                              m.is_featured
+                                ? 'Remove from Homepage Hero Banner'
+                                : 'Feature in Homepage Hero Banner'
+                            }
                             className={`px-2 py-1 rounded-md text-[10px] font-bold flex items-center space-x-1 transition-all cursor-pointer ${
                               m.is_featured
                                 ? 'bg-amber-100 text-amber-800 border border-amber-300 font-extrabold'
                                 : 'bg-white border border-slate-200 text-slate-600 hover:border-amber-400 hover:text-amber-700'
                             }`}
                           >
-                            <Sparkles className={`w-3 h-3 ${m.is_featured ? 'text-amber-600 fill-amber-600' : 'text-slate-400'}`} />
+                            <Sparkles
+                              className={`w-3 h-3 ${m.is_featured ? 'text-amber-600 fill-amber-600' : 'text-slate-400'}`}
+                            />
                             <span>{m.is_featured ? 'In Hero' : 'Hero'}</span>
                           </button>
                         ) : null}
@@ -647,9 +677,13 @@ function MemoriesContent() {
               <div className="w-full max-w-xl p-6 rounded-3xl border border-orange-300 bg-white shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto my-auto">
                 <div className="flex items-center justify-between pb-3 border-b border-orange-100">
                   <div className="flex items-center space-x-2">
-                    <h3 className="font-editorial text-xl text-slate-900 font-bold">Edit Media Asset</h3>
+                    <h3 className="font-editorial text-xl text-slate-900 font-bold">
+                      Edit Media Asset
+                    </h3>
                     <span className="text-[10px] px-2 py-0.5 rounded font-extrabold uppercase tracking-wider bg-orange-100 text-orange-800">
-                      {editingMemory.media_type === 'video' ? 'YouTube Video' : 'Cloudflare R2 Photo'}
+                      {editingMemory.media_type === 'video'
+                        ? 'YouTube Video'
+                        : 'Cloudflare R2 Photo'}
                     </span>
                   </div>
                   <button
@@ -671,7 +705,9 @@ function MemoriesContent() {
                         type="text"
                         required
                         value={editingMemory.title}
-                        onChange={(e) => setEditingMemory({ ...editingMemory, title: e.target.value })}
+                        onChange={(e) =>
+                          setEditingMemory({ ...editingMemory, title: e.target.value })
+                        }
                         className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold focus:outline-none focus:border-orange-500"
                       />
                     </div>
@@ -682,7 +718,9 @@ function MemoriesContent() {
                       <input
                         type="text"
                         value={editingMemory.telugu_title || ''}
-                        onChange={(e) => setEditingMemory({ ...editingMemory, telugu_title: e.target.value })}
+                        onChange={(e) =>
+                          setEditingMemory({ ...editingMemory, telugu_title: e.target.value })
+                        }
                         placeholder="శ్రీ వినాయక చవితి..."
                         className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold focus:outline-none focus:border-orange-500"
                       />
@@ -697,7 +735,9 @@ function MemoriesContent() {
                       </label>
                       <select
                         value={editingMemory.festival_year_id}
-                        onChange={(e) => setEditingMemory({ ...editingMemory, festival_year_id: e.target.value })}
+                        onChange={(e) =>
+                          setEditingMemory({ ...editingMemory, festival_year_id: e.target.value })
+                        }
                         className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer"
                       >
                         {years.map((y) => (
@@ -714,7 +754,9 @@ function MemoriesContent() {
                       </label>
                       <select
                         value={editingMemory.category_id || ''}
-                        onChange={(e) => setEditingMemory({ ...editingMemory, category_id: e.target.value })}
+                        onChange={(e) =>
+                          setEditingMemory({ ...editingMemory, category_id: e.target.value })
+                        }
                         className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer"
                       >
                         {categories.map((c) => (
@@ -734,7 +776,9 @@ function MemoriesContent() {
                     <input
                       type="date"
                       value={editingMemory.capture_date || ''}
-                      onChange={(e) => setEditingMemory({ ...editingMemory, capture_date: e.target.value })}
+                      onChange={(e) =>
+                        setEditingMemory({ ...editingMemory, capture_date: e.target.value })
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold focus:outline-none focus:border-orange-500"
                     />
                   </div>
@@ -747,7 +791,9 @@ function MemoriesContent() {
                     <textarea
                       rows={2}
                       value={editingMemory.description || ''}
-                      onChange={(e) => setEditingMemory({ ...editingMemory, description: e.target.value })}
+                      onChange={(e) =>
+                        setEditingMemory({ ...editingMemory, description: e.target.value })
+                      }
                       className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold focus:outline-none focus:border-orange-500"
                     />
                   </div>
@@ -759,7 +805,9 @@ function MemoriesContent() {
                         <input
                           type="checkbox"
                           checked={editingMemory.is_featured}
-                          onChange={(e) => setEditingMemory({ ...editingMemory, is_featured: e.target.checked })}
+                          onChange={(e) =>
+                            setEditingMemory({ ...editingMemory, is_featured: e.target.checked })
+                          }
                           className="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-orange-300"
                         />
                         <span>🌟 Feature in Homepage Hero Carousel</span>
@@ -770,7 +818,9 @@ function MemoriesContent() {
                       <input
                         type="checkbox"
                         checked={editingMemory.is_published}
-                        onChange={(e) => setEditingMemory({ ...editingMemory, is_published: e.target.checked })}
+                        onChange={(e) =>
+                          setEditingMemory({ ...editingMemory, is_published: e.target.checked })
+                        }
                         className="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 border-orange-300"
                       />
                       <span>Visible / Published</span>

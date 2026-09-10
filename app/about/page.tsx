@@ -11,7 +11,8 @@ export default function AboutPage() {
         <div className="relative inline-block py-2 px-8 border-y-2 border-gold-500/40 bg-charcoal-950/60 backdrop-blur-md mb-6">
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-gold-400 rotate-45 border border-charcoal-950" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gold-300">
-            &#3118;&#3112; &#3093;&#3134;&#3114;&#3137;&#3093;&#3134;&#3117;&#3137; &bull; {associationName} ({villageName})
+            &#3118;&#3112; &#3093;&#3134;&#3114;&#3137;&#3093;&#3134;&#3117;&#3137; &bull;{' '}
+            {associationName} ({villageName})
           </span>
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-gold-400 rotate-45 border border-charcoal-950" />
         </div>
@@ -20,7 +21,8 @@ export default function AboutPage() {
           About Our Sacred Gallery
         </h1>
         <p className="font-editorial text-xl sm:text-2xl text-gold-300 italic max-w-2xl mx-auto leading-relaxed">
-          &ldquo;శ్రీ విఘ్నేశ్వర ప్రసాదేన సర్వకార్యాణి సిద్ధ్యన్తు |&rdquo;<br />
+          &ldquo;శ్రీ విఘ్నేశ్వర ప్రసాదేన సర్వకార్యాణి సిద్ధ్యన్తు |&rdquo;
+          <br />
           <span className="text-sm font-sans uppercase tracking-widest text-ivory-200/90 not-italic block mt-1">
             &ldquo;Pure devotion. Timeless memories. One association. One celebration.&rdquo;
           </span>
@@ -34,7 +36,11 @@ export default function AboutPage() {
             The Devotional Heart of {associationName}
           </h2>
           <p className="text-sm sm:text-base text-ivory-200/90 leading-relaxed font-sans">
-            For generations in {villageName}, {associationName}&rsquo;s Vinayaka Chavithi celebration has been the sacred anchor of our community. As the auspicious morning heralds Lord Ganesha&rsquo;s sthapana, the air fills with Vedic chants, fresh marigolds, banana leaves, and the sweet aroma of homemade modakams. Differences dissolve as elders, mothers, youth, and children assemble under the mandap in pure faith and harmony.
+            For generations in {villageName}, {associationName}&rsquo;s Vinayaka Chavithi
+            celebration has been the sacred anchor of our community. As the auspicious morning
+            heralds Lord Ganesha&rsquo;s sthapana, the air fills with Vedic chants, fresh marigolds,
+            banana leaves, and the sweet aroma of homemade modakams. Differences dissolve as elders,
+            mothers, youth, and children assemble under the mandap in pure faith and harmony.
           </p>
         </div>
 
@@ -43,7 +49,11 @@ export default function AboutPage() {
             A Living Sanctuary for Global Village Family
           </h2>
           <p className="text-sm sm:text-base text-ivory-200/90 leading-relaxed font-sans">
-            Established in 2026 by {associationName}, this digital memory gallery was built so that no sacred prayer, evening aarti, or joyful Kolatam dance is ever forgotten. Whether living in {villageName} or halfway across the world, every villager can step into this sanctuary to relive the sights, sounds, and divine spirit of our annual Vinayaka Chavithi celebrations.
+            Established in 2026 by {associationName}, this digital memory gallery was built so that
+            no sacred prayer, evening aarti, or joyful Kolatam dance is ever forgotten. Whether
+            living in {villageName} or halfway across the world, every villager can step into this
+            sanctuary to relive the sights, sounds, and divine spirit of our annual Vinayaka
+            Chavithi celebrations.
           </p>
         </div>
 
@@ -52,7 +62,10 @@ export default function AboutPage() {
             Sacred Preservation & Integrity
           </h2>
           <p className="text-sm sm:text-base text-ivory-200/90 leading-relaxed font-sans">
-            To preserve the reverent atmosphere and visual excellence of our archive, content is managed exclusively by our authorized {associationName} administrator. High-definition photographs and video documentaries captured live each day are permanently archived in full visual clarity.
+            To preserve the reverent atmosphere and visual excellence of our archive, content is
+            managed exclusively by our authorized {associationName} administrator. High-definition
+            photographs and video documentaries captured live each day are permanently archived in
+            full visual clarity.
           </p>
         </div>
       </div>

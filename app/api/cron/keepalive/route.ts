@@ -12,7 +12,10 @@ export async function GET() {
     const supabase = createAdminSupabaseClient() || createClient();
 
     // 1. Keep Database Awake: Ping festival_years and categories tables
-    const { data: dbData, error: dbErr } = await supabase.from('festival_years').select('id').limit(1);
+    const { data: dbData, error: dbErr } = await supabase
+      .from('festival_years')
+      .select('id')
+      .limit(1);
     if (!dbErr) {
       dbStatus = 'active (query ok)';
     } else {

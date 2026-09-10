@@ -136,7 +136,10 @@ function UploadContent() {
 
     const filesToProcess = Array.from(files).slice(0, availableSlots);
     if (files.length > availableSlots) {
-      toast.info('Batch Capped', `Added ${availableSlots} photos. Maximum is ${MAX_BATCH_SIZE} at a time.`);
+      toast.info(
+        'Batch Capped',
+        `Added ${availableSlots} photos. Maximum is ${MAX_BATCH_SIZE} at a time.`
+      );
     }
 
     const newItems: PhotoBatchItem[] = filesToProcess.map((file) => {
@@ -211,7 +214,9 @@ function UploadContent() {
   };
 
   const updateYouTubeTeluguTitle = (id: string, teluguTitle: string) => {
-    setYoutubeBatch((prev) => prev.map((item) => (item.id === id ? { ...item, teluguTitle } : item)));
+    setYoutubeBatch((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, teluguTitle } : item))
+    );
   };
 
   const removeYouTubeItem = (id: string) => {
@@ -242,7 +247,9 @@ function UploadContent() {
         continue;
       }
 
-      setPhotoBatch((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i)));
+      setPhotoBatch((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i))
+      );
 
       try {
         // Step 1: Upload directly to Cloudflare R2 bucket
@@ -267,11 +274,17 @@ function UploadContent() {
         if (!res.ok || data.error) throw new Error(data.error || 'Failed to save photo record');
 
         successCount++;
-        setPhotoBatch((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'success' } : i)));
+        setPhotoBatch((prev) =>
+          prev.map((i) => (i.id === item.id ? { ...i, status: 'success' } : i))
+        );
       } catch (err: any) {
         failCount++;
         setPhotoBatch((prev) =>
-          prev.map((i) => (i.id === item.id ? { ...i, status: 'error', errorMessage: err.message || 'Upload error' } : i))
+          prev.map((i) =>
+            i.id === item.id
+              ? { ...i, status: 'error', errorMessage: err.message || 'Upload error' }
+              : i
+          )
         );
       }
     }
@@ -287,7 +300,10 @@ function UploadContent() {
         router.push(isFeaturedInHero ? '/admin/hero' : '/admin/memories');
       }, 1200);
     } else {
-      toast.error('Partial Upload Failure', `${successCount} photos uploaded, ${failCount} failed.`);
+      toast.error(
+        'Partial Upload Failure',
+        `${successCount} photos uploaded, ${failCount} failed.`
+      );
     }
   };
 
@@ -321,7 +337,9 @@ function UploadContent() {
         continue;
       }
 
-      setYoutubeBatch((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i)));
+      setYoutubeBatch((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i))
+      );
 
       try {
         const fd = new FormData();
@@ -341,11 +359,17 @@ function UploadContent() {
         if (!res.ok || data.error) throw new Error(data.error || 'Failed to save YouTube record');
 
         successCount++;
-        setYoutubeBatch((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'success' } : i)));
+        setYoutubeBatch((prev) =>
+          prev.map((i) => (i.id === item.id ? { ...i, status: 'success' } : i))
+        );
       } catch (err: any) {
         failCount++;
         setYoutubeBatch((prev) =>
-          prev.map((i) => (i.id === item.id ? { ...i, status: 'error', errorMessage: err.message || 'Save error' } : i))
+          prev.map((i) =>
+            i.id === item.id
+              ? { ...i, status: 'error', errorMessage: err.message || 'Save error' }
+              : i
+          )
         );
       }
     }
@@ -353,7 +377,10 @@ function UploadContent() {
     setUploading(false);
 
     if (failCount === 0) {
-      toast.success('Videos Saved!', `Successfully linked ${successCount} YouTube video(s) to Media Library.`);
+      toast.success(
+        'Videos Saved!',
+        `Successfully linked ${successCount} YouTube video(s) to Media Library.`
+      );
       setTimeout(() => {
         router.push('/admin/memories?filter=videos');
       }, 1200);
@@ -363,7 +390,10 @@ function UploadContent() {
   };
 
   // Dropdown options
-  const yearOptions: DropdownOption[] = years.map((y) => ({ value: y.id, label: `${y.year} - ${y.title}` }));
+  const yearOptions: DropdownOption[] = years.map((y) => ({
+    value: y.id,
+    label: `${y.year} - ${y.title}`,
+  }));
   const categoryOptions: DropdownOption[] = categories.map((c) => ({ value: c.id, label: c.name }));
 
   const activeBatchCount = activeTab === 'photos' ? photoBatch.length : youtubeBatch.length;
@@ -389,7 +419,8 @@ function UploadContent() {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl">
-                The centralized portal for all festival media. Photos upload to Cloudflare R2 (with optional Hero feature); videos stream via YouTube.
+                The centralized portal for all festival media. Photos upload to Cloudflare R2 (with
+                optional Hero feature); videos stream via YouTube.
               </p>
             </div>
 
@@ -451,12 +482,17 @@ function UploadContent() {
                       className="w-5 h-5 rounded text-orange-600 focus:ring-orange-500 border-amber-300 mt-0.5 cursor-pointer flex-shrink-0"
                     />
                     <div>
-                      <label htmlFor="heroSwitch" className="text-sm font-bold text-slate-900 cursor-pointer flex items-center space-x-1.5">
+                      <label
+                        htmlFor="heroSwitch"
+                        className="text-sm font-bold text-slate-900 cursor-pointer flex items-center space-x-1.5"
+                      >
                         <Sparkles className="w-4 h-4 text-amber-600 fill-amber-600" />
                         <span>Feature in Hero Carousel &amp; Gallery</span>
                       </label>
                       <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                        When switched on, this photo is featured as a full-screen rotating slide on the <strong>homepage hero banner</strong> AND also appears in the celebration chapters gallery timeline.
+                        When switched on, this photo is featured as a full-screen rotating slide on
+                        the <strong>homepage hero banner</strong> AND also appears in the
+                        celebration chapters gallery timeline.
                       </p>
                     </div>
                   </div>
@@ -526,10 +562,15 @@ function UploadContent() {
                   <span>Cloudflare R2 &amp; YouTube Architecture</span>
                 </h4>
                 <p className="leading-relaxed text-[11px]">
-                  • <strong>Photos</strong> upload directly to Cloudflare R2 bucket <code className="bg-white px-1 py-0.5 rounded text-slate-800">lambodara-media</code>. Full HD, zero compression artifacts, zero egress costs.
+                  • <strong>Photos</strong> upload directly to Cloudflare R2 bucket{' '}
+                  <code className="bg-white px-1 py-0.5 rounded text-slate-800">
+                    lambodara-media
+                  </code>
+                  . Full HD, zero compression artifacts, zero egress costs.
                 </p>
                 <p className="leading-relaxed text-[11px]">
-                  • <strong>Videos</strong> stream via YouTube. We store only the clean video ID, giving high-performance streaming with zero video hosting charges.
+                  • <strong>Videos</strong> stream via YouTube. We store only the clean video ID,
+                  giving high-performance streaming with zero video hosting charges.
                 </p>
               </div>
             </div>
@@ -545,7 +586,8 @@ function UploadContent() {
                         Photo Memory Dropzone
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Upload up to {MAX_BATCH_SIZE} photos simultaneously. JPG, PNG, WebP, AVIF accepted.
+                        Upload up to {MAX_BATCH_SIZE} photos simultaneously. JPG, PNG, WebP, AVIF
+                        accepted.
                       </p>
                     </div>
                     <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
@@ -577,7 +619,8 @@ function UploadContent() {
                         Drag and drop photos here, or browse files
                       </h4>
                       <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
-                        Photos are securely transferred directly to Cloudflare R2 storage. No size limits, crystal-clear quality.
+                        Photos are securely transferred directly to Cloudflare R2 storage. No size
+                        limits, crystal-clear quality.
                       </p>
                     </div>
                   )}
@@ -595,7 +638,11 @@ function UploadContent() {
                         >
                           {/* Thumbnail */}
                           <div className="relative w-24 h-20 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0 border border-slate-200">
-                            <img src={item.previewUrl} alt={item.title} className="w-full h-full object-cover" />
+                            <img
+                              src={item.previewUrl}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
                             <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-[9px] font-bold text-white">
                               {item.sizeFormatted}
                             </span>
@@ -650,7 +697,10 @@ function UploadContent() {
                               </div>
                             )}
                             {item.status === 'error' && (
-                              <div className="flex items-center space-x-1 text-rose-600 text-xs font-bold" title={item.errorMessage}>
+                              <div
+                                className="flex items-center space-x-1 text-rose-600 text-xs font-bold"
+                                title={item.errorMessage}
+                              >
                                 <AlertCircle className="w-4 h-4" />
                                 <span>Failed</span>
                               </div>
@@ -682,7 +732,8 @@ function UploadContent() {
                         YouTube Video Memory Hub
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Add video links for instant zero-lag streaming. Free CDN hosting directly from YouTube.
+                        Add video links for instant zero-lag streaming. Free CDN hosting directly
+                        from YouTube.
                       </p>
                     </div>
                     <button
@@ -818,7 +869,9 @@ function UploadContent() {
                       {isFeaturedInHero ? ' (featured in Hero Carousel & Gallery)' : ' (Gallery)'}
                     </span>
                   ) : (
-                    <span>Ready to save {youtubeBatch.length} YouTube video link(s) to Media Library</span>
+                    <span>
+                      Ready to save {youtubeBatch.length} YouTube video link(s) to Media Library
+                    </span>
                   )}
                 </div>
 

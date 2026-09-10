@@ -103,7 +103,9 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
       const isVid = ALLOWED_VIDEO_TYPES.includes(file.type);
 
       if (!isImg && !isVid) {
-        alert(`File format "${file.name}" is not supported. Please upload JPEG, PNG, WebP, AVIF, MP4, or WebM.`);
+        alert(
+          `File format "${file.name}" is not supported. Please upload JPEG, PNG, WebP, AVIF, MP4, or WebM.`
+        );
         return;
       }
 
@@ -149,9 +151,7 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
   };
 
   const updateItemField = (id: string, field: keyof UploadItem, value: any) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-    );
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
   const processUpload = async (item: UploadItem) => {
@@ -171,10 +171,18 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
 
       // Direct signed client storage upload for memories (photos & videos of ANY size)
       const { uploadFileWithSignedUrl } = await import('@/lib/clientStorage');
-      const directStorageUrl = await uploadFileWithSignedUrl(item.file, 'festival-media', `${item.mediaType}s`);
+      const directStorageUrl = await uploadFileWithSignedUrl(
+        item.file,
+        'festival-media',
+        `${item.mediaType}s`
+      );
       let directThumbUrl: string | null = null;
       if (thumbnailBlob && thumbnailBlob instanceof File) {
-        directThumbUrl = await uploadFileWithSignedUrl(thumbnailBlob, 'festival-media', 'thumbnails');
+        directThumbUrl = await uploadFileWithSignedUrl(
+          thumbnailBlob,
+          'festival-media',
+          'thumbnails'
+        );
       }
 
       updateItemField(item.id, 'progress', 80);
@@ -239,7 +247,10 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
                 </span>
               </div>
               <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed font-sans">
-                <strong>What goes here:</strong> Ritual photos and video clips associated with specific <strong>Festival Years</strong> (e.g. 2026, 2025) and <strong>Categories</strong> (e.g. Aarti, Procession). These appear on public gallery pages.
+                <strong>What goes here:</strong> Ritual photos and video clips associated with
+                specific <strong>Festival Years</strong> (e.g. 2026, 2025) and{' '}
+                <strong>Categories</strong> (e.g. Aarti, Procession). These appear on public gallery
+                pages.
               </p>
             </div>
           </div>
@@ -276,7 +287,8 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
           Drag &amp; Drop Festival Photos and Videos
         </h3>
         <p className="text-xs text-slate-600 max-w-md mx-auto mb-4 leading-relaxed font-medium">
-          Supports high resolution JPEG, PNG, WebP, AVIF images (up to 15MB) and MP4, WebM video clips (up to 100MB). Batch selection enabled.
+          Supports high resolution JPEG, PNG, WebP, AVIF images (up to 15MB) and MP4, WebM video
+          clips (up to 100MB). Batch selection enabled.
         </p>
         <button
           type="button"
@@ -532,7 +544,10 @@ export default function MediaUploader({ years, categories, onUploadSuccess }: Me
 
                   {item.status === 'error' && (
                     <div className="flex flex-col items-end space-y-1">
-                      <span className="text-[10px] text-rose-600 font-bold max-w-[140px] truncate" title={item.errorMessage}>
+                      <span
+                        className="text-[10px] text-rose-600 font-bold max-w-[140px] truncate"
+                        title={item.errorMessage}
+                      >
                         {item.errorMessage || 'Upload failed'}
                       </span>
                       <button

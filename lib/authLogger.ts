@@ -14,7 +14,9 @@ export interface AuthLogEntry {
 
 const AUDIT_LOG_FILE = path.join(process.cwd(), 'public', 'uploads', 'admin_audit_logs.json');
 
-export async function logAdminAuthAttempt(entry: Omit<AuthLogEntry, 'id' | 'created_at'>): Promise<AuthLogEntry> {
+export async function logAdminAuthAttempt(
+  entry: Omit<AuthLogEntry, 'id' | 'created_at'>
+): Promise<AuthLogEntry> {
   const newLog: AuthLogEntry = {
     id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     ...entry,

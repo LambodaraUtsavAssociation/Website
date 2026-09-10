@@ -2,16 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import {
-  X,
-  Share2,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-  Play,
-  Sparkles,
-} from 'lucide-react';
+import { X, Share2, Check, ChevronLeft, ChevronRight, Heart, Play, Sparkles } from 'lucide-react';
 import { Memory } from '@/types';
 import SafeMediaImage from './SafeMediaImage';
 import { getMediaDisplayInfo } from '@/lib/mediaUtils';
@@ -113,6 +104,17 @@ export default function MemoryViewerModal({
       window.scrollTo(0, scrollY);
     };
   }, [selectedIndex]);
+
+  // Automatically pause background devotional audio whenever a video memory is opened/viewed
+  useEffect(() => {
+    if (selectedIndex === null) return;
+    const currentMemory = memories[selectedIndex];
+    if (currentMemory && (currentMemory.media_type === 'video' || currentMemory.youtube_video_id)) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('festival-video-play'));
+      }
+    }
+  }, [selectedIndex, memories]);
 
   // Smart background preloading of adjacent images in gallery
   useEffect(() => {
@@ -284,13 +286,17 @@ export default function MemoryViewerModal({
 
   const handleShare = async () => {
     if (!currentMemory) return;
-    const shareUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}${window.location.pathname}?memory=${currentMemory.id}`
-      : '';
+    const shareUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}${window.location.pathname}?memory=${currentMemory.id}`
+        : '';
 
     const shareData = {
       title: currentMemory.title || 'Lambodara Utsav Memory',
-      text: currentMemory.description || currentMemory.title || 'Check out this memory from Lambodara Utsav (Papi Reddy Palli)!',
+      text:
+        currentMemory.description ||
+        currentMemory.title ||
+        'Check out this memory from Lambodara Utsav (Papi Reddy Palli)!',
       url: shareUrl,
     };
 
@@ -344,7 +350,8 @@ export default function MemoryViewerModal({
               {associationName}
             </span>
             <span className="text-[10px] sm:text-[11px] text-gold-400 font-sans tracking-widest uppercase font-semibold truncate">
-              {selectedIndex + 1} of {memories.length} &bull; {currentMemory.media_type === 'video' ? 'Film' : 'Photo'}
+              {selectedIndex + 1} of {memories.length} &bull;{' '}
+              {currentMemory.media_type === 'video' ? 'Film' : 'Photo'}
             </span>
           </div>
         </div>
@@ -444,7 +451,8 @@ export default function MemoryViewerModal({
             <div className="flex items-center space-x-2 flex-1 sm:flex-initial">
               {/* Like / Devotional Blessing Icon Button */}
               {(() => {
-                const bCount = blessingCounts[currentMemory.id] ?? currentMemory.blessing_count ?? 0;
+                const bCount =
+                  blessingCounts[currentMemory.id] ?? currentMemory.blessing_count ?? 0;
                 return (
                   <button
                     onClick={() => toggleLike(currentMemory.id)}
@@ -455,8 +463,12 @@ export default function MemoryViewerModal({
                     }`}
                     title="Devotional Blessing"
                   >
-                    <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? 'fill-saffron-400 text-saffron-400' : 'text-gold-400'}`} />
-                    <span className="truncate">{isLiked ? `Blessed (${bCount})` : bCount > 0 ? `Bless (${bCount})` : 'Bless'}</span>
+                    <Heart
+                      className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLiked ? 'fill-saffron-400 text-saffron-400' : 'text-gold-400'}`}
+                    />
+                    <span className="truncate">
+                      {isLiked ? `Blessed (${bCount})` : bCount > 0 ? `Bless (${bCount})` : 'Bless'}
+                    </span>
                   </button>
                 );
               })()}
@@ -467,7 +479,11 @@ export default function MemoryViewerModal({
                 className="flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-charcoal-850 border border-gold-500/30 text-xs font-bold text-ivory-100 hover:text-gold-300 hover:border-gold-400 flex items-center justify-center space-x-1.5 sm:space-x-2 transition-all shadow-md active:scale-95 cursor-pointer"
                 title="Share Memory"
               >
-                {copied ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-400" /> : <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-400" />}
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-400" />
+                ) : (
+                  <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-400" />
+                )}
                 <span>{copied ? 'Copied' : 'Share'}</span>
               </button>
 
@@ -482,7 +498,7 @@ export default function MemoryViewerModal({
                 title="Share to WhatsApp"
               >
                 <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.983.538 1.895.845 2.791.846h.005c3.182 0 5.768-2.587 5.769-5.766.001-3.182-2.585-5.768-5.766-5.768zm0-2.172c4.418 0 8 3.582 8 8 0 1.547-.442 3.013-1.258 4.298l1.227 4.702-4.819-1.263c-1.229.742-2.656 1.163-4.15 1.163-4.418 0-8-3.582-8-8s3.582-8 8-8z"/>
+                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.983.538 1.895.845 2.791.846h.005c3.182 0 5.768-2.587 5.769-5.766.001-3.182-2.585-5.768-5.766-5.768zm0-2.172c4.418 0 8 3.582 8 8 0 1.547-.442 3.013-1.258 4.298l1.227 4.702-4.819-1.263c-1.229.742-2.656 1.163-4.15 1.163-4.418 0-8-3.582-8-8s3.582-8 8-8z" />
                 </svg>
                 <span className="hidden sm:inline">WhatsApp</span>
               </a>
@@ -512,7 +528,8 @@ export default function MemoryViewerModal({
           {/* Description Box (High-Visibility Rich Card) */}
           <div className="bg-charcoal-900/90 rounded-2xl p-3.5 sm:p-5 border border-gold-500/25 text-xs sm:text-sm text-ivory-100 leading-relaxed mt-3 shadow-xl">
             <p className="font-sans text-ivory-200 text-xs sm:text-sm font-medium leading-relaxed">
-              {currentMemory.description || 'Sacred festival memory preserved in the official digital gallery.'}
+              {currentMemory.description ||
+                'Sacred festival memory preserved in the official digital gallery.'}
             </p>
           </div>
 
@@ -583,15 +600,16 @@ export default function MemoryViewerModal({
                 <div
                   key={mem.id + idx}
                   onClick={() => onNavigate(idx)}
-                  className={`group flex items-center space-x-3.5 p-2.5 rounded-xl cursor-pointer transition-all ${isCurrent
+                  className={`group flex items-center space-x-3.5 p-2.5 rounded-xl cursor-pointer transition-all ${
+                    isCurrent
                       ? 'bg-gradient-to-r from-saffron-600/25 via-charcoal-900 to-gold-500/10 border-2 border-gold-400 shadow-glow-gold text-ivory-50'
                       : 'bg-charcoal-900/90 border border-charcoal-750 hover:bg-charcoal-850 hover:border-gold-500/40 text-ivory-100 shadow-md'
-                    }`}
+                  }`}
                 >
                   {/* Thumbnail Box */}
                   <div className="relative w-28 h-16 rounded-lg overflow-hidden bg-charcoal-950 flex-shrink-0 border border-gold-500/30 shadow-md">
                     <SafeMediaImage
-                      src={mediaInfo.isYouTube ? (mediaInfo.poster || mediaInfo.url) : mediaInfo.url}
+                      src={mediaInfo.isYouTube ? mediaInfo.poster || mediaInfo.url : mediaInfo.url}
                       poster={mediaInfo.poster}
                       alt={mem.title}
                       fill
@@ -612,8 +630,9 @@ export default function MemoryViewerModal({
                   {/* Playlist Item Metadata */}
                   <div className="min-w-0 flex-1">
                     <h4
-                      className={`text-xs font-bold line-clamp-2 leading-snug ${isCurrent ? 'text-gold-300' : 'text-ivory-100 group-hover:text-gold-300'
-                        }`}
+                      className={`text-xs font-bold line-clamp-2 leading-snug ${
+                        isCurrent ? 'text-gold-300' : 'text-ivory-100 group-hover:text-gold-300'
+                      }`}
                     >
                       {mem.title}
                     </h4>

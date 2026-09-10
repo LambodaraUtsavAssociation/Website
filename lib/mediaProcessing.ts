@@ -29,9 +29,24 @@ export async function processImageVariants(file: File): Promise<ProcessedMediaVa
         const aspectRatio = origWidth / origHeight;
 
         const [thumbnailBlob, cardBlob, fullBlob] = await Promise.all([
-          resizeImageToBlob(img, Math.min(300, origWidth), Math.min(300 / aspectRatio, origHeight), 0.85),
-          resizeImageToBlob(img, Math.min(800, origWidth), Math.min(800 / aspectRatio, origHeight), 0.88),
-          resizeImageToBlob(img, Math.min(1920, origWidth), Math.min(1920 / aspectRatio, origHeight), 0.92),
+          resizeImageToBlob(
+            img,
+            Math.min(300, origWidth),
+            Math.min(300 / aspectRatio, origHeight),
+            0.85
+          ),
+          resizeImageToBlob(
+            img,
+            Math.min(800, origWidth),
+            Math.min(800 / aspectRatio, origHeight),
+            0.88
+          ),
+          resizeImageToBlob(
+            img,
+            Math.min(1920, origWidth),
+            Math.min(1920 / aspectRatio, origHeight),
+            0.92
+          ),
         ]);
 
         URL.revokeObjectURL(objectUrl);
@@ -60,7 +75,12 @@ export async function processImageVariants(file: File): Promise<ProcessedMediaVa
   });
 }
 
-function resizeImageToBlob(img: HTMLImageElement, targetWidth: number, targetHeight: number, quality: number): Promise<Blob> {
+function resizeImageToBlob(
+  img: HTMLImageElement,
+  targetWidth: number,
+  targetHeight: number,
+  quality: number
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(targetWidth);
@@ -106,7 +126,7 @@ export async function uploadInChunks({
 
   while (offset < totalSize) {
     const chunk = file.slice(offset, offset + chunkSize);
-    
+
     // Simulate chunk upload slice
     await new Promise((res) => setTimeout(res, 50));
     offset += chunk.size;

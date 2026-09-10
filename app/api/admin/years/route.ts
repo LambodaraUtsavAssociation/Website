@@ -18,7 +18,10 @@ export async function GET() {
       }
     );
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Failed to fetch festival years' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Failed to fetch festival years' },
+      { status: 500 }
+    );
   }
 }
 
@@ -40,7 +43,9 @@ export async function POST(request: NextRequest) {
       title: body.title || `Vinayaka Chavithi ${yearNumber}`,
       slug: body.slug || `${yearNumber}`,
       description: body.description || '',
-      cover_image_url: body.cover_image_url || 'https://images.unsplash.com/photo-1567157577867-05ccb1388e66?q=80&w=2000&auto=format&fit=crop',
+      cover_image_url:
+        body.cover_image_url ||
+        'https://images.unsplash.com/photo-1567157577867-05ccb1388e66?q=80&w=2000&auto=format&fit=crop',
       is_published: body.is_published !== false,
     });
 
@@ -57,6 +62,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, year: createdYear });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Failed to create festival year' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Failed to create festival year' },
+      { status: 500 }
+    );
   }
 }

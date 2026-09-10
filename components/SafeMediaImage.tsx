@@ -40,17 +40,12 @@ export default function SafeMediaImage({
 
   // 1. Detect if this is a YouTube video (from src embed URL or poster)
   const isEmbedUrl = typeof src === 'string' && src.includes('youtube.com/embed');
-  const ytId =
-    (src && extractYouTubeId(src)) ||
-    (poster && extractYouTubeId(poster)) ||
-    null;
+  const ytId = (src && extractYouTubeId(src)) || (poster && extractYouTubeId(poster)) || null;
 
   const isVideo = isVideoUrl(src) || !!ytId || isEmbedUrl;
   // Only treat posterUrl as a valid thumbnail if it's NOT a video/embed URL itself
   const posterUrl =
-    poster && !isVideoUrl(poster) && !poster.includes('youtube.com/embed')
-      ? poster
-      : undefined;
+    poster && !isVideoUrl(poster) && !poster.includes('youtube.com/embed') ? poster : undefined;
   const hasImageThumbnail = Boolean(posterUrl);
 
   useEffect(() => {
@@ -77,14 +72,16 @@ export default function SafeMediaImage({
       } bg-gradient-to-b from-charcoal-900 via-charcoal-950 to-charcoal-900 border border-charcoal-800 flex flex-col items-center justify-center p-4 text-center select-none ${className}`}
     >
       <div className="w-10 h-10 rounded-2xl bg-charcoal-850 border border-charcoal-700 flex items-center justify-center text-gold-400 mb-2 shadow-inner">
-        {isVideo ? <Film className="w-5 h-5 text-gold-400/80" /> : <ImageOff className="w-5 h-5 text-gold-400/80" />}
+        {isVideo ? (
+          <Film className="w-5 h-5 text-gold-400/80" />
+        ) : (
+          <ImageOff className="w-5 h-5 text-gold-400/80" />
+        )}
       </div>
       <span className="text-xs font-medium text-ivory-300 font-sans tracking-wide">
         {isVideo ? 'Video Not Available' : 'Image Not Available'}
       </span>
-      <span className="text-[10px] text-ivory-500 font-sans mt-0.5">
-        Media content unavailable
-      </span>
+      <span className="text-[10px] text-ivory-500 font-sans mt-0.5">Media content unavailable</span>
     </div>
   );
 
@@ -147,7 +144,9 @@ export default function SafeMediaImage({
         >
           <div className="flex flex-col items-center space-y-1 opacity-50">
             <Film className="w-6 h-6 text-gold-400" />
-            <span className="text-[9px] font-bold uppercase tracking-widest text-gold-300">Film</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-gold-300">
+              Film
+            </span>
           </div>
         </div>
       );

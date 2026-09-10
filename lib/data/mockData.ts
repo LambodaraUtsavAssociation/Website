@@ -6,7 +6,8 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Aagaman',
     telugu_name: 'ఆగమనం',
     slug: 'aagaman',
-    description: 'Grand arrival and welcoming processional of Lord Vinayaka into Papi Reddy Palli mandap.',
+    description:
+      'Grand arrival and welcoming processional of Lord Vinayaka into Papi Reddy Palli mandap.',
     display_order: 1,
     created_at: new Date().toISOString(),
   },
@@ -24,7 +25,8 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Pooja & Aarthi',
     telugu_name: 'పూజ మరియు హారతి',
     slug: 'pooja-aarthi',
-    description: 'Daily morning and evening Vedic rituals, brass lamp Aarti, and devotional stotram chanting.',
+    description:
+      'Daily morning and evening Vedic rituals, brass lamp Aarti, and devotional stotram chanting.',
     display_order: 3,
     created_at: new Date().toISOString(),
   },
@@ -33,7 +35,8 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Decoration',
     telugu_name: 'అలంకరణ',
     slug: 'decoration',
-    description: 'Traditional flower garlands, coconut leaf pandal arches, and divine mandap lighting decorations.',
+    description:
+      'Traditional flower garlands, coconut leaf pandal arches, and divine mandap lighting decorations.',
     display_order: 4,
     created_at: new Date().toISOString(),
   },
@@ -42,7 +45,8 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Culturals',
     telugu_name: 'సాంస్కృతిక కార్యక్రమాలు',
     slug: 'culturals',
-    description: 'Devotional music, traditional folk dances, drama performances, and cultural stage programs.',
+    description:
+      'Devotional music, traditional folk dances, drama performances, and cultural stage programs.',
     display_order: 5,
     created_at: new Date().toISOString(),
   },
@@ -51,7 +55,8 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Games & Competitions',
     telugu_name: 'ఆటలు మరియు పోటీలు',
     slug: 'games-competitions',
-    description: "Village community sports, children's drawing competitions, and festive sports events.",
+    description:
+      "Village community sports, children's drawing competitions, and festive sports events.",
     display_order: 6,
     created_at: new Date().toISOString(),
   },
@@ -69,7 +74,8 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Random Clicks',
     telugu_name: 'ఇతర జ్ఞాపకాలు',
     slug: 'random-clicks',
-    description: 'Candid village moments, volunteer portraits, behind-the-scenes preparation, and festive smiles.',
+    description:
+      'Candid village moments, volunteer portraits, behind-the-scenes preparation, and festive smiles.',
     display_order: 8,
     created_at: new Date().toISOString(),
   },
@@ -78,7 +84,8 @@ export const INITIAL_CATEGORIES: Category[] = [
     name: 'Visarjan',
     telugu_name: 'నిమజ్జనం',
     slug: 'visarjan',
-    description: 'Immersion procession, grand Nimajjanam rallies, gulal celebrations, and farewell rituals.',
+    description:
+      'Immersion procession, grand Nimajjanam rallies, gulal celebrations, and farewell rituals.',
     display_order: 9,
     created_at: new Date().toISOString(),
   },

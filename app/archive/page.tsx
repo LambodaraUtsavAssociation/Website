@@ -138,7 +138,8 @@ export default function ArchivePage() {
           </h1>
 
           <p className="text-xs sm:text-sm text-ivory-300/80 font-sans max-w-lg mx-auto">
-            Preserving the annual Vinayaka Chavithi celebrations, grand pandals, and sacred memories of {villageName}.
+            Preserving the annual Vinayaka Chavithi celebrations, grand pandals, and sacred memories
+            of {villageName}.
           </p>
 
           {/* ======================================================================= */}
@@ -192,14 +193,19 @@ export default function ArchivePage() {
         {/* ========================================================================= */}
         {isLoading ? (
           <div className="py-24 flex flex-col items-center justify-center">
-            <RatLoader message="Loading Past Years Timeline..." submessage={`${associationName} • ${villageName}`} />
+            <RatLoader
+              message="Loading Past Years Timeline..."
+              submessage={`${associationName} • ${villageName}`}
+            />
           </div>
         ) : enrichedYears.length === 0 ? (
           <div className="relative rounded-2xl border border-gold-500/30 p-8 text-center max-w-lg mx-auto bg-charcoal-900/70">
             <div className="inline-block py-1 px-4 border border-saffron-500/30 text-saffron-300 text-xs uppercase tracking-widest mb-4">
               Inaugural Edition
             </div>
-            <h3 className="font-editorial text-2xl text-ivory-50 mb-2">No Past Editions Recorded Yet</h3>
+            <h3 className="font-editorial text-2xl text-ivory-50 mb-2">
+              No Past Editions Recorded Yet
+            </h3>
             <p className="text-xs text-ivory-400 mb-6">
               {currentYear} marks the inaugural launch of our digital memory gallery.
             </p>
@@ -418,7 +424,9 @@ export default function ArchivePage() {
               ) : (
                 <div className="py-10 text-center bg-charcoal-900/40 border border-charcoal-800 rounded-xl p-6">
                   <BookOpen className="w-7 h-7 text-gold-400/50 mx-auto mb-2" />
-                  <h4 className="text-xs font-semibold text-ivory-100 mb-1">No Matching Editions</h4>
+                  <h4 className="text-xs font-semibold text-ivory-100 mb-1">
+                    No Matching Editions
+                  </h4>
                   <p className="text-[11px] text-ivory-400 mb-3">
                     No records found matching &ldquo;{searchQuery}&rdquo;.
                   </p>
@@ -483,9 +491,7 @@ export default function ArchivePage() {
                   <div className="w-8 h-8 rounded bg-saffron-600/20 border border-saffron-500/40 flex items-center justify-center text-saffron-400 mb-2.5">
                     <History className="w-4 h-4" />
                   </div>
-                  <h4 className="font-editorial text-base text-ivory-50 mb-0.5">
-                    Grand Visarjan
-                  </h4>
+                  <h4 className="font-editorial text-base text-ivory-50 mb-0.5">Grand Visarjan</h4>
                   <div className="text-[10px] text-gold-400/90 font-medium mb-1.5">
                     శోభాయాత్ర &amp; నిమజ్జనం
                   </div>
@@ -507,7 +513,8 @@ export default function ArchivePage() {
                 Have Memories from Past Celebrations?
               </h4>
               <p className="text-xs text-ivory-300/80 mb-3 font-sans">
-                Contact the {associationName} committee to archive vintage photographs or recordings.
+                Contact the {associationName} committee to archive vintage photographs or
+                recordings.
               </p>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-charcoal-800 text-[11px] text-gold-300 border border-gold-500/20">
                 <span>{villageName}</span>

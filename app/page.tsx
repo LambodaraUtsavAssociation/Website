@@ -23,7 +23,8 @@ const INAUGURAL_2026_YEAR: FestivalYear = {
   year: 2026,
   title: 'Vinayaka Chavithi 2026',
   slug: '2026',
-  description: 'Inaugural digital gallery preserving the sacred traditions of Lambodara Utsav Association, Papi Reddy Palli.',
+  description:
+    'Inaugural digital gallery preserving the sacred traditions of Lambodara Utsav Association, Papi Reddy Palli.',
   is_published: true,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
@@ -59,14 +60,17 @@ export default function HomePage() {
         setHeroBucketMedia(heroMedia || []);
 
         // Derive active year without an extra query
-        const activeYear = years.find((y) => y.slug === '2026' || y.year === 2026) || years[0] || null;
+        const activeYear =
+          years.find((y) => y.slug === '2026' || y.year === 2026) || years[0] || null;
         if (activeYear) {
           setFestivalYear(activeYear);
         }
 
         // Derive featured video from already fetched memories
-        const vid = memories.find((m) => m.media_type === 'video' && m.is_featured) ||
-                    memories.find((m) => m.media_type === 'video') || null;
+        const vid =
+          memories.find((m) => m.media_type === 'video' && m.is_featured) ||
+          memories.find((m) => m.media_type === 'video') ||
+          null;
         setFeaturedVideo(vid);
       } catch (err) {
         console.error('Failed to load homepage data:', err);
@@ -81,9 +85,7 @@ export default function HomePage() {
     };
   }, []);
 
-  const heroUrls = new Set(
-    (heroBucketMedia || []).map((h) => h.url).filter(Boolean)
-  );
+  const heroUrls = new Set((heroBucketMedia || []).map((h) => h.url).filter(Boolean));
 
   // Filter out memories featured in the Hero section to prevent duplicate display in the gallery below
   const galleryMemories = allMemories.filter((m) => {

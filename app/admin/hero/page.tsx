@@ -187,9 +187,7 @@ export default function AdminHeroPage() {
   };
 
   // Available library photos not yet in hero
-  const unfeaturedPhotos = allMemories.filter(
-    (m) => m.media_type === 'image' && !m.is_featured
-  );
+  const unfeaturedPhotos = allMemories.filter((m) => m.media_type === 'image' && !m.is_featured);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 pb-20 md:pb-0">
@@ -212,7 +210,8 @@ export default function AdminHeroPage() {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                Single source of truth: Select any photo from your Media Library to rotate on the homepage hero section.
+                Single source of truth: Select any photo from your Media Library to rotate on the
+                homepage hero section.
               </p>
             </div>
 
@@ -250,7 +249,8 @@ export default function AdminHeroPage() {
                   Dual-Display Hero Architecture
                 </h3>
                 <p className="text-xs text-amber-800 mt-0.5">
-                  Slides automatically rotate every 5 seconds on the homepage. If no custom photos are featured, the website gracefully presents the built-in sacred temple visuals.
+                  Slides automatically rotate every 5 seconds on the homepage. If no custom photos
+                  are featured, the website gracefully presents the built-in sacred temple visuals.
                 </p>
               </div>
             </div>
@@ -443,7 +443,8 @@ export default function AdminHeroPage() {
                               {item.title}
                             </h4>
                             <p className="text-[11px] text-slate-500 font-medium truncate">
-                              {item.category?.name || 'General'} &bull; {item.capture_date || '2026'}
+                              {item.category?.name || 'General'} &bull;{' '}
+                              {item.capture_date || '2026'}
                             </p>
                           </div>
                         </div>
@@ -460,7 +461,8 @@ export default function AdminHeroPage() {
                     ))
                   ) : (
                     <div className="text-center py-10 text-slate-500 text-xs">
-                      All existing photos in your Media Library are already featured in the Hero Carousel!
+                      All existing photos in your Media Library are already featured in the Hero
+                      Carousel!
                     </div>
                   )}
                 </div>

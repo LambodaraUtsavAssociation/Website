@@ -10,7 +10,10 @@ interface FeaturedMemoriesSectionProps {
   onSelectMemory: (memory: Memory) => void;
 }
 
-export default function FeaturedMemoriesSection({ memories, onSelectMemory }: FeaturedMemoriesSectionProps) {
+export default function FeaturedMemoriesSection({
+  memories,
+  onSelectMemory,
+}: FeaturedMemoriesSectionProps) {
   if (!memories || memories.length === 0) return null;
 
   const primaryFeatured = memories[0];
@@ -32,7 +35,8 @@ export default function FeaturedMemoriesSection({ memories, onSelectMemory }: Fe
           </h2>
         </div>
         <p className="text-xs text-ivory-400 max-w-xs mt-2 sm:mt-0 leading-relaxed font-sans">
-          Key moments selected by our archive curator capturing the essence of devotion and celebration.
+          Key moments selected by our archive curator capturing the essence of devotion and
+          celebration.
         </p>
       </div>
 

@@ -50,7 +50,9 @@ export default function AdminDashboardPage() {
 
   const totalPhotos = allMemories.filter((m) => m.media_type === 'image').length;
   const totalVideos = allMemories.filter((m) => m.media_type === 'video').length;
-  const heroSlidesCount = allMemories.filter((m) => m.is_featured && m.media_type === 'image').length;
+  const heroSlidesCount = allMemories.filter(
+    (m) => m.is_featured && m.media_type === 'image'
+  ).length;
   const recentMemories = allMemories.slice(0, 6);
 
   const handleToggleHero = async (m: Memory, e: React.MouseEvent) => {
@@ -117,13 +119,17 @@ export default function AdminDashboardPage() {
               className="p-4 sm:p-5 rounded-2xl border-2 border-orange-200 bg-white shadow-xs hover:border-orange-500 transition-all group cursor-pointer"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Total Media</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  Total Media
+                </span>
                 <Layers className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform" />
               </div>
               <span className="font-editorial text-2xl sm:text-4xl text-orange-600 font-bold block">
                 {allMemories.length}
               </span>
-              <span className="text-[11px] text-slate-500 block mt-1 font-medium">All Gallery Items</span>
+              <span className="text-[11px] text-slate-500 block mt-1 font-medium">
+                All Gallery Items
+              </span>
             </Link>
 
             <Link
@@ -131,13 +137,17 @@ export default function AdminDashboardPage() {
               className="p-4 sm:p-5 rounded-2xl border-2 border-orange-200 bg-white shadow-xs hover:border-orange-500 transition-all group cursor-pointer"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Photos</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  Photos
+                </span>
                 <Images className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform" />
               </div>
               <span className="font-editorial text-2xl sm:text-4xl text-orange-600 font-bold block">
                 {totalPhotos}
               </span>
-              <span className="text-[11px] text-slate-500 block mt-1 font-medium">Cloudflare R2 Storage</span>
+              <span className="text-[11px] text-slate-500 block mt-1 font-medium">
+                Cloudflare R2 Storage
+              </span>
             </Link>
 
             <Link
@@ -145,13 +155,17 @@ export default function AdminDashboardPage() {
               className="p-4 sm:p-5 rounded-2xl border-2 border-orange-200 bg-white shadow-xs hover:border-orange-500 transition-all group cursor-pointer"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">YouTube Videos</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  YouTube Videos
+                </span>
                 <Film className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform" />
               </div>
               <span className="font-editorial text-2xl sm:text-4xl text-orange-600 font-bold block">
                 {totalVideos}
               </span>
-              <span className="text-[11px] text-slate-500 block mt-1 font-medium">Zero-Lag Stream</span>
+              <span className="text-[11px] text-slate-500 block mt-1 font-medium">
+                Zero-Lag Stream
+              </span>
             </Link>
 
             <Link
@@ -159,13 +173,17 @@ export default function AdminDashboardPage() {
               className="p-4 sm:p-5 rounded-2xl border-2 border-amber-300 bg-amber-50/50 shadow-xs hover:border-amber-500 transition-all group cursor-pointer"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800">Hero Carousel</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800">
+                  Hero Carousel
+                </span>
                 <Sparkles className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
               </div>
               <span className="font-editorial text-2xl sm:text-4xl text-amber-700 font-bold block">
                 {heroSlidesCount}
               </span>
-              <span className="text-[11px] text-amber-800 block mt-1 font-medium">Active Banner Slides</span>
+              <span className="text-[11px] text-amber-800 block mt-1 font-medium">
+                Active Banner Slides
+              </span>
             </Link>
           </div>
 
@@ -230,8 +248,12 @@ export default function AdminDashboardPage() {
           <div className="p-4 sm:p-6 rounded-3xl border-2 border-orange-200 bg-white shadow-sm">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-orange-100">
               <div>
-                <h2 className="font-editorial text-lg sm:text-xl text-slate-900 font-bold">Recent Media</h2>
-                <p className="text-xs text-slate-600">Latest photos & videos saved in your platform.</p>
+                <h2 className="font-editorial text-lg sm:text-xl text-slate-900 font-bold">
+                  Recent Media
+                </h2>
+                <p className="text-xs text-slate-600">
+                  Latest photos & videos saved in your platform.
+                </p>
               </div>
 
               <Link
@@ -287,7 +309,9 @@ export default function AdminDashboardPage() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">{m.title}</h4>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                            {m.title}
+                          </h4>
                           <div className="flex items-center space-x-1.5 mt-0.5">
                             <span className="text-[10px] text-slate-500 font-medium truncate">
                               {m.category?.name || 'Festival Chapter'}
@@ -305,15 +329,23 @@ export default function AdminDashboardPage() {
                         {!isVideo && (
                           <button
                             onClick={(e) => handleToggleHero(m, e)}
-                            title={m.is_featured ? 'Click to remove from Hero Carousel' : 'Click to feature in Hero Carousel'}
+                            title={
+                              m.is_featured
+                                ? 'Click to remove from Hero Carousel'
+                                : 'Click to feature in Hero Carousel'
+                            }
                             className={`p-1.5 rounded-lg border text-[10px] font-bold uppercase transition-all flex items-center space-x-1 cursor-pointer ${
                               m.is_featured
                                 ? 'bg-amber-100 border-amber-400 text-amber-800 shadow-xs'
                                 : 'bg-white border-slate-200 text-slate-400 hover:border-amber-400 hover:text-amber-600'
                             }`}
                           >
-                            <Star className={`w-3.5 h-3.5 ${m.is_featured ? 'fill-amber-500 text-amber-500' : ''}`} />
-                            <span className="hidden sm:inline">{m.is_featured ? 'Hero' : 'Pin'}</span>
+                            <Star
+                              className={`w-3.5 h-3.5 ${m.is_featured ? 'fill-amber-500 text-amber-500' : ''}`}
+                            />
+                            <span className="hidden sm:inline">
+                              {m.is_featured ? 'Hero' : 'Pin'}
+                            </span>
                           </button>
                         )}
 

@@ -39,7 +39,8 @@ export default function HeroSection({
       if (isMounted && media && media.length > 0) {
         // Filter out any accidental local dummy paths
         const cleanMedia = media.filter(
-          (m) => m.url && !m.url.includes('/images/hero/') && !m.url.includes('/uploads/hero-section/')
+          (m) =>
+            m.url && !m.url.includes('/images/hero/') && !m.url.includes('/uploads/hero-section/')
         );
         setHeroBucketMedia(cleanMedia);
       }
@@ -51,7 +52,8 @@ export default function HeroSection({
 
   // 1. Prioritize Cloudflare R2 memories where admin marked is_featured = true
   const featuredImageMemories = (memories || []).filter(
-    (m) => m.is_featured && m.is_published && m.media_type === 'image' && (m.full_path || m.storage_path)
+    (m) =>
+      m.is_featured && m.is_published && m.media_type === 'image' && (m.full_path || m.storage_path)
   );
 
   const heroFromMemories: HeroMediaItem[] = featuredImageMemories.map((m) => ({
@@ -151,20 +153,15 @@ export default function HeroSection({
           <span className="text-gold-400 text-xs sm:text-base md:text-lg font-sans tracking-[0.25em] uppercase block mb-1 sm:mb-3 font-semibold">
             {villageName}
           </span>
-          <span className="font-extrabold block text-ivory-50 mb-1 sm:mb-3">
-            {associationName}
-          </span>
-          <span className="font-normal text-ivory-100">
-            Vinayaka Chavithi{' '}
-          </span>
-          <span className="font-bold font-year text-gradient-gold inline-block">
-            2026
-          </span>
+          <span className="font-extrabold block text-ivory-50 mb-1 sm:mb-3">{associationName}</span>
+          <span className="font-normal text-ivory-100">Vinayaka Chavithi </span>
+          <span className="font-bold font-year text-gradient-gold inline-block">2026</span>
         </h1>
 
         {/* Subtitle / Documentary Tagline */}
         <p className="font-editorial italic text-xs sm:text-xl md:text-2xl text-ivory-100 max-w-2xl mb-4 sm:mb-6 leading-relaxed drop-shadow-md text-left sm:text-center">
-          &ldquo;A celebration of faith, lights, tradition, and the memories we create together.&rdquo;
+          &ldquo;A celebration of faith, lights, tradition, and the memories we create
+          together.&rdquo;
         </p>
 
         {/* Live Countdown Clock — Full Width on Mobile, Centered on Web */}

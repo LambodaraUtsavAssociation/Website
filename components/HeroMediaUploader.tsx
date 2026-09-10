@@ -1,7 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Upload, Image as ImageIcon, Film, AlertTriangle, CheckCircle2, Trash2, Info, Sparkles, X, RefreshCw, Zap } from 'lucide-react';
+import {
+  Upload,
+  Image as ImageIcon,
+  Film,
+  AlertTriangle,
+  CheckCircle2,
+  Trash2,
+  Info,
+  Sparkles,
+  X,
+  RefreshCw,
+  Zap,
+} from 'lucide-react';
 import SafeMediaImage from './SafeMediaImage';
 import { toast } from '@/lib/toastStore';
 import { getHeroBucketMedia } from '@/lib/data/repository';
@@ -55,7 +67,7 @@ export default function HeroMediaUploader() {
 
   const handleFilesSelect = async (files: FileList | File[]) => {
     const rawFiles = Array.from(files);
-    
+
     const currentYear = new Date().getFullYear();
     const newItems: QueuedHeroFile[] = rawFiles.map((file, idx) => ({
       id: `HERO-${currentYear}-${String(queuedFiles.length + idx + 1).padStart(3, '0')}`,
@@ -74,10 +86,13 @@ export default function HeroMediaUploader() {
 
     // Automatically compress oversized images in background
     for (const queuedItem of newItems) {
-      if (queuedItem.originalFile.type.startsWith('image/') && queuedItem.originalFile.size > MAX_SIZE_BYTES) {
+      if (
+        queuedItem.originalFile.type.startsWith('image/') &&
+        queuedItem.originalFile.size > MAX_SIZE_BYTES
+      ) {
         try {
           const result = await compressImageUnder50KB(queuedItem.originalFile);
-          
+
           setQueuedFiles((prev) =>
             prev.map((item) => {
               if (item.id === queuedItem.id) {
@@ -140,7 +155,9 @@ export default function HeroMediaUploader() {
   };
 
   const handleUploadAll = async () => {
-    const validQueue = queuedFiles.filter((i) => i.isValidSize && !i.isCompressing && (i.status === 'idle' || i.status === 'error'));
+    const validQueue = queuedFiles.filter(
+      (i) => i.isValidSize && !i.isCompressing && (i.status === 'idle' || i.status === 'error')
+    );
     if (validQueue.length === 0) {
       toast.error('No Valid Files', 'Please select images/videos under 50 KB to upload.');
       return;
@@ -156,7 +173,11 @@ export default function HeroMediaUploader() {
 
       try {
         const { uploadFileWithSignedUrl } = await import('@/lib/clientStorage');
-        const directHeroUrl = await uploadFileWithSignedUrl(item.file, 'hero-section', 'hero-media');
+        const directHeroUrl = await uploadFileWithSignedUrl(
+          item.file,
+          'hero-section',
+          'hero-media'
+        );
 
         const formData = new FormData();
         formData.append('url', directHeroUrl);
@@ -179,7 +200,9 @@ export default function HeroMediaUploader() {
         successCount++;
       } catch (err: any) {
         setQueuedFiles((prev) =>
-          prev.map((f) => (f.id === item.id ? { ...f, status: 'error', errorMessage: err.message } : f))
+          prev.map((f) =>
+            f.id === item.id ? { ...f, status: 'error', errorMessage: err.message } : f
+          )
         );
       }
     }
@@ -195,7 +218,9 @@ export default function HeroMediaUploader() {
     }
   };
 
-  const validFilesCount = queuedFiles.filter((i) => i.isValidSize && !i.isCompressing && i.status !== 'success').length;
+  const validFilesCount = queuedFiles.filter(
+    (i) => i.isValidSize && !i.isCompressing && i.status !== 'success'
+  ).length;
 
   const handleDeleteHeroMedia = async (itemUrl: string, caption: string) => {
     if (!confirm(`Are you sure you want to remove "${caption}" from the Hero Section?`)) return;
@@ -242,13 +267,17 @@ export default function HeroMediaUploader() {
                 </span>
               </div>
               <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed font-sans">
-                <strong>Upload &amp; Manage Banner Slides:</strong> Upload HD photos or video clips directly to the home header. Images are automatically optimized for 1080p desktop clarity.
+                <strong>Upload &amp; Manage Banner Slides:</strong> Upload HD photos or video clips
+                directly to the home header. Images are automatically optimized for 1080p desktop
+                clarity.
               </p>
             </div>
           </div>
 
           <div className="px-4 py-2.5 rounded-xl bg-white border border-orange-200 text-right flex-shrink-0 shadow-xs">
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Active Slides</span>
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
+              Active Slides
+            </span>
             <span className="text-sm font-bold text-orange-600 flex items-center justify-end space-x-1 mt-0.5">
               <span>{items.length} Slides Online</span>
             </span>
@@ -276,7 +305,10 @@ export default function HeroMediaUploader() {
           onChange={(e) => e.target.files && handleFilesSelect(e.target.files)}
         />
 
-        <label htmlFor="hero-file-input" className="cursor-pointer flex flex-col items-center justify-center space-y-3">
+        <label
+          htmlFor="hero-file-input"
+          className="cursor-pointer flex flex-col items-center justify-center space-y-3"
+        >
           <div className="w-14 h-14 rounded-2xl bg-orange-100 border border-orange-300 flex items-center justify-center text-orange-600 shadow-xs">
             <Upload className="w-7 h-7" />
           </div>
@@ -286,7 +318,8 @@ export default function HeroMediaUploader() {
               Click to browse or drop any images/videos for Hero Section
             </span>
             <span className="text-xs text-slate-600 mt-1 block">
-              Images of any resolution will be <strong>automatically optimized for 1080p Full HD WebP clarity</strong>.
+              Images of any resolution will be{' '}
+              <strong>automatically optimized for 1080p Full HD WebP clarity</strong>.
             </span>
           </div>
 
@@ -308,7 +341,8 @@ export default function HeroMediaUploader() {
                 Batch Upload Queue ({queuedFiles.length} files selected)
               </h4>
               <p className="text-xs text-slate-600">
-                All selected images are automatically optimized for 1080p Full HD clarity before publishing.
+                All selected images are automatically optimized for 1080p Full HD clarity before
+                publishing.
               </p>
             </div>
 
@@ -349,19 +383,24 @@ export default function HeroMediaUploader() {
                     item.isCompressing
                       ? 'border-orange-400 bg-orange-50/50'
                       : !item.isValidSize
-                      ? 'border-rose-400 bg-rose-50/30'
-                      : item.status === 'success'
-                      ? 'border-emerald-400 bg-emerald-50/30'
-                      : item.status === 'error'
-                      ? 'border-rose-500'
-                      : 'border-slate-200'
+                        ? 'border-rose-400 bg-rose-50/30'
+                        : item.status === 'success'
+                          ? 'border-emerald-400 bg-emerald-50/30'
+                          : item.status === 'error'
+                            ? 'border-rose-500'
+                            : 'border-slate-200'
                   }`}
                 >
                   <div className="relative w-full h-32 bg-slate-200">
                     {isVideo ? (
                       <video src={item.previewUrl} className="w-full h-full object-cover" />
                     ) : (
-                      <SafeMediaImage src={item.previewUrl} alt="Preview" fill className="object-cover" />
+                      <SafeMediaImage
+                        src={item.previewUrl}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
                     )}
 
                     <button
@@ -378,7 +417,10 @@ export default function HeroMediaUploader() {
                   </div>
 
                   <div className="p-3 space-y-1">
-                    <h5 className="text-xs font-bold text-slate-900 truncate" title={item.originalFile.name}>
+                    <h5
+                      className="text-xs font-bold text-slate-900 truncate"
+                      title={item.originalFile.name}
+                    >
                       {item.originalFile.name}
                     </h5>
 
@@ -394,17 +436,22 @@ export default function HeroMediaUploader() {
                           <span>Compressed to {item.compressedSizeKB.toFixed(1)} KB</span>
                         </div>
                         <p className="text-[9px] text-slate-500 font-mono">
-                          Was: {item.originalSizeKB.toFixed(1)} KB ➔ Now: {item.compressedSizeKB.toFixed(1)} KB
+                          Was: {item.originalSizeKB.toFixed(1)} KB ➔ Now:{' '}
+                          {item.compressedSizeKB.toFixed(1)} KB
                         </p>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className={`font-bold ${item.isValidSize ? 'text-emerald-700' : 'text-rose-600'}`}>
+                        <span
+                          className={`font-bold ${item.isValidSize ? 'text-emerald-700' : 'text-rose-600'}`}
+                        >
                           {item.compressedSizeKB.toFixed(1)} KB {item.isValidSize ? '✓ HD' : '✕'}
                         </span>
 
                         {item.status === 'uploading' && (
-                          <span className="text-orange-600 font-bold animate-pulse">Uploading...</span>
+                          <span className="text-orange-600 font-bold animate-pulse">
+                            Uploading...
+                          </span>
                         )}
                         {item.status === 'success' && (
                           <span className="text-emerald-700 font-bold flex items-center space-x-1">
@@ -429,8 +476,12 @@ export default function HeroMediaUploader() {
       <div className="p-6 rounded-3xl bg-white border-2 border-orange-200 shadow-xs">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-orange-100">
           <div>
-            <h4 className="text-base font-editorial text-slate-900 font-bold">Active Home Hero Slides</h4>
-            <p className="text-xs text-slate-600">Currently live slides in the home page header banner.</p>
+            <h4 className="text-base font-editorial text-slate-900 font-bold">
+              Active Home Hero Slides
+            </h4>
+            <p className="text-xs text-slate-600">
+              Currently live slides in the home page header banner.
+            </p>
           </div>
           <span className="text-xs text-orange-600 font-mono font-bold">
             {items.length} {items.length === 1 ? 'Slide' : 'Slides'} Active
@@ -438,10 +489,13 @@ export default function HeroMediaUploader() {
         </div>
 
         {loading ? (
-          <div className="py-8 text-center text-xs text-slate-500">Loading hero bucket items...</div>
+          <div className="py-8 text-center text-xs text-slate-500">
+            Loading hero bucket items...
+          </div>
         ) : items.length === 0 ? (
           <div className="py-8 text-center text-xs text-slate-500">
-            No custom media uploaded to <code className="text-orange-600 font-mono font-bold">Hero Section</code> bucket yet.
+            No custom media uploaded to{' '}
+            <code className="text-orange-600 font-mono font-bold">Hero Section</code> bucket yet.
             <br />
             (Home page is using the default curated village Ganesha visuals).
           </div>
@@ -477,7 +531,9 @@ export default function HeroMediaUploader() {
                   <div className="p-3.5 flex items-center justify-between">
                     <div className="min-w-0">
                       <h5 className="text-xs font-bold text-slate-900 truncate">{item.caption}</h5>
-                      <p className="text-[10px] text-slate-500 mt-0.5 truncate font-mono">{item.url}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 truncate font-mono">
+                        {item.url}
+                      </p>
                     </div>
 
                     <button

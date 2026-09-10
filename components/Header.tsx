@@ -102,7 +102,11 @@ export default function Header({
                 style={{ width: '44px', height: '44px', minWidth: '44px', minHeight: '44px' }}
               >
                 <picture>
-                  <source media="(max-width: 767px)" type="image/svg+xml" srcSet="/images/village_logo_icon.svg" />
+                  <source
+                    media="(max-width: 767px)"
+                    type="image/svg+xml"
+                    srcSet="/images/village_logo_icon.svg"
+                  />
                   <img
                     src="/images/village_logo_icon.png"
                     alt={`${associationName} (${villageName}) Emblem`}

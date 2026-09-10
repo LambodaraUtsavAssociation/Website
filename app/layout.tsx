@@ -57,19 +57,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${plusJakartaSans.variable} ${cinzel.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`dark ${plusJakartaSans.variable} ${cinzel.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0a0a0d" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="preconnect" href="https://pub-13aeba224f4f47cba2eb4c85f116f469.r2.dev" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://pub-13aeba224f4f47cba2eb4c85f116f469.r2.dev"
+          crossOrigin="anonymous"
+        />
         <link rel="dns-prefetch" href="https://pub-13aeba224f4f47cba2eb4c85f116f469.r2.dev" />
         <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://img.youtube.com" />

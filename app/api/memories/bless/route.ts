@@ -14,7 +14,9 @@ function getSupabaseClient() {
 export async function GET() {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.from('memories').select('id, blessing_count, is_blessed');
+    const { data, error } = await supabase
+      .from('memories')
+      .select('id, blessing_count, is_blessed');
 
     if (!error && data && data.length > 0) {
       const blessingsMap: Record<string, number> = {};
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
       if (existing) {
         const currentCount = existing.blessing_count || 0;
         newCount = isBless ? currentCount + 1 : Math.max(0, currentCount - 1);
-        
+
         await supabase
           .from('memories')
           .update({
@@ -70,12 +72,14 @@ export async function POST(request: NextRequest) {
 
       // Log blessing audit row
       const clientIp = request.headers.get('x-forwarded-for') || '127.0.0.1';
-      await supabase.from('blessings').insert([{
-        memory_id: memoryId,
-        action: isBless ? 'bless' : 'unbless',
-        user_ip: clientIp,
-        created_at: new Date().toISOString(),
-      }]);
+      await supabase.from('blessings').insert([
+        {
+          memory_id: memoryId,
+          action: isBless ? 'bless' : 'unbless',
+          user_ip: clientIp,
+          created_at: new Date().toISOString(),
+        },
+      ]);
     } catch (dbErr) {
       console.warn('Supabase blessing DB sync warning:', dbErr);
     }
@@ -90,6 +94,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: any) {
     console.error('Failed to toggle blessing:', err);
-    return NextResponse.json({ error: err.message || 'Failed to update blessing' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Failed to update blessing' },
+      { status: 500 }
+    );
   }
 }

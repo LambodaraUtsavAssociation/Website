@@ -29,10 +29,10 @@ export default function ToastContainer() {
               isSuccess
                 ? 'bg-charcoal-900/95 border-green-500/40 text-ivory-50 shadow-green-950/40'
                 : isError
-                ? 'bg-charcoal-900/95 border-red-500/40 text-ivory-50 shadow-red-950/40'
-                : isWarning
-                ? 'bg-charcoal-900/95 border-gold-500/40 text-ivory-50 shadow-gold-950/40'
-                : 'bg-charcoal-900/95 border-saffron-500/40 text-ivory-50 shadow-saffron-950/40'
+                  ? 'bg-charcoal-900/95 border-red-500/40 text-ivory-50 shadow-red-950/40'
+                  : isWarning
+                    ? 'bg-charcoal-900/95 border-gold-500/40 text-ivory-50 shadow-gold-950/40'
+                    : 'bg-charcoal-900/95 border-saffron-500/40 text-ivory-50 shadow-saffron-950/40'
             }`}
           >
             {/* Icon */}
@@ -40,7 +40,9 @@ export default function ToastContainer() {
               {isSuccess && <CheckCircle2 className="w-5 h-5 text-green-400" />}
               {isError && <AlertCircle className="w-5 h-5 text-red-400" />}
               {isWarning && <AlertTriangle className="w-5 h-5 text-gold-400" />}
-              {!isSuccess && !isError && !isWarning && <Info className="w-5 h-5 text-saffron-400" />}
+              {!isSuccess && !isError && !isWarning && (
+                <Info className="w-5 h-5 text-saffron-400" />
+              )}
             </div>
 
             {/* Content */}
@@ -49,9 +51,7 @@ export default function ToastContainer() {
                 {t.title}
               </h5>
               {t.message && (
-                <p className="text-xs text-ivory-300 mt-1 leading-relaxed font-sans">
-                  {t.message}
-                </p>
+                <p className="text-xs text-ivory-300 mt-1 leading-relaxed font-sans">{t.message}</p>
               )}
             </div>
 

@@ -3,7 +3,21 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutDashboard, Calendar, Images, Tag, ExternalLink, LogOut, ShieldCheck, Menu, X, Sparkles, Compass, ChevronRight, Upload } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Calendar,
+  Images,
+  Tag,
+  ExternalLink,
+  LogOut,
+  ShieldCheck,
+  Menu,
+  X,
+  Sparkles,
+  Compass,
+  ChevronRight,
+  Upload,
+} from 'lucide-react';
 
 interface AdminSidebarProps {
   adminEmail?: string;
@@ -47,10 +61,9 @@ export default function AdminSidebar({
 
       {/* Main Sidebar (Desktop fixed sidebar + Mobile drawer) */}
       <aside
-        className={`${mobileOpen
-          ? 'fixed top-16 left-0 bottom-0 z-50 w-72 flex'
-          : 'hidden md:flex'
-          } md:fixed md:top-16 md:left-0 md:bottom-0 md:w-72 md:z-30 bg-white border-r border-orange-200 p-5 flex-col justify-between overflow-y-auto transition-all shadow-sm`}
+        className={`${
+          mobileOpen ? 'fixed top-16 left-0 bottom-0 z-50 w-72 flex' : 'hidden md:flex'
+        } md:fixed md:top-16 md:left-0 md:bottom-0 md:w-72 md:z-30 bg-white border-r border-orange-200 p-5 flex-col justify-between overflow-y-auto transition-all shadow-sm`}
       >
         <div className="space-y-6">
           <div>
@@ -63,10 +76,11 @@ export default function AdminSidebar({
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${isActive
-                      ? 'bg-orange-500 text-white border-l-4 border-orange-700 shadow-md'
-                      : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50/70'
-                      }`}
+                    className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                      isActive
+                        ? 'bg-orange-500 text-white border-l-4 border-orange-700 shadow-md'
+                        : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50/70'
+                    }`}
                   >
                     <div className="flex items-center space-x-3">
                       <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-orange-500'}`} />

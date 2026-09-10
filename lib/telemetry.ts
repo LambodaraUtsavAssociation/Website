@@ -33,13 +33,14 @@ export function logAuditEvent({
   details?: Record<string, any>;
 }): AuditLogEntry {
   const correlationId = `corr-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  
+
   let ipAddress = '127.0.0.1';
   let userAgent = 'Enterprise-Admin-Portal';
 
   if (request) {
     if ('headers' in request) {
-      ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+      ipAddress =
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
       userAgent = request.headers.get('user-agent') || 'Enterprise-Admin-Portal';
     }
   }
@@ -63,7 +64,9 @@ export function logAuditEvent({
   }
 
   // Structured Enterprise Console Telemetry
-  console.log(`[AUDIT-LOG] [${logEntry.timestamp}] [${action}] Entity: ${targetEntity} | ID: ${entityId || 'N/A'} | Correlation: ${correlationId}`);
+  console.log(
+    `[AUDIT-LOG] [${logEntry.timestamp}] [${action}] Entity: ${targetEntity} | ID: ${entityId || 'N/A'} | Correlation: ${correlationId}`
+  );
 
   return logEntry;
 }

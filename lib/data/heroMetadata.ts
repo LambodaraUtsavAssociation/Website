@@ -49,7 +49,11 @@ export function saveStoredHeroMetadata(metadata: Record<string, HeroMetadataItem
 }
 
 export function formatHeroCaption(urlOrFilename: string, fallbackCaption?: string): string {
-  if (fallbackCaption && !/^\d{10,}/.test(fallbackCaption) && !/^[a-f0-9]{20,}/i.test(fallbackCaption)) {
+  if (
+    fallbackCaption &&
+    !/^\d{10,}/.test(fallbackCaption) &&
+    !/^[a-f0-9]{20,}/i.test(fallbackCaption)
+  ) {
     return fallbackCaption;
   }
   const filename = path.basename(urlOrFilename);

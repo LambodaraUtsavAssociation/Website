@@ -11,7 +11,9 @@ export async function POST() {
   }
 
   // Fetch active memories from DB
-  const { data: dbMemories } = await adminSupabase.from('memories').select('storage_path, thumbnail_path');
+  const { data: dbMemories } = await adminSupabase
+    .from('memories')
+    .select('storage_path, thumbnail_path');
   const activeUrls = new Set<string>();
 
   (dbMemories || []).forEach((m: any) => {
@@ -23,17 +25,23 @@ export async function POST() {
 
   // Inspect festival-media subfolders
   for (const folder of ['images', 'videos', 'thumbnails']) {
-    const { data: files } = await adminSupabase.storage.from('festival-media').list(folder, { limit: 100 });
+    const { data: files } = await adminSupabase.storage
+      .from('festival-media')
+      .list(folder, { limit: 100 });
     if (files && files.length > 0) {
       for (const f of files) {
         if (!f.name || f.name.startsWith('.')) continue;
         const relativePath = `${folder}/${f.name}`;
-        const { data: publicUrlData } = adminSupabase.storage.from('festival-media').getPublicUrl(relativePath);
+        const { data: publicUrlData } = adminSupabase.storage
+          .from('festival-media')
+          .getPublicUrl(relativePath);
         const publicUrl = publicUrlData.publicUrl.split('?')[0];
 
         // If this file is NOT referenced in any DB memory record, remove it from storage!
         if (!activeUrls.has(publicUrl)) {
-          const { error } = await adminSupabase.storage.from('festival-media').remove([relativePath]);
+          const { error } = await adminSupabase.storage
+            .from('festival-media')
+            .remove([relativePath]);
           if (!error) {
             removedMediaFiles.push(relativePath);
           }

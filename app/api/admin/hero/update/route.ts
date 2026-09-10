@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminSession } from '@/lib/auth';
-import { getStoredHeroMetadata, saveStoredHeroMetadata, HeroMetadataItem } from '@/lib/data/heroMetadata';
+import {
+  getStoredHeroMetadata,
+  saveStoredHeroMetadata,
+  HeroMetadataItem,
+} from '@/lib/data/heroMetadata';
 
 export async function POST(request: NextRequest) {
   const admin = await verifyAdminSession();
@@ -64,6 +68,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, count: slides.length });
   } catch (err: any) {
     console.error('Failed to update hero metadata:', err);
-    return NextResponse.json({ error: err.message || 'Failed to save hero updates' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Failed to save hero updates' },
+      { status: 500 }
+    );
   }
 }

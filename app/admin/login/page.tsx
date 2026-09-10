@@ -3,7 +3,16 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, Mail, Eye, EyeOff, AlertCircle, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
+import {
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  ArrowLeft,
+  Loader2,
+  ShieldCheck,
+} from 'lucide-react';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -57,7 +66,9 @@ function LoginForm() {
       <div>
         <label className="text-[10px] sm:text-[11px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1.5 flex items-center justify-between">
           <span>Admin Email Address</span>
-          <span className="text-[9px] text-orange-600 font-mono font-bold lowercase">authorized access only</span>
+          <span className="text-[9px] text-orange-600 font-mono font-bold lowercase">
+            authorized access only
+          </span>
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -162,7 +173,11 @@ export default function AdminLoginPage() {
             </p>
           </div>
 
-          <Suspense fallback={<div className="text-center text-xs text-slate-500 py-4">Loading login portal...</div>}>
+          <Suspense
+            fallback={
+              <div className="text-center text-xs text-slate-500 py-4">Loading login portal...</div>
+            }
+          >
             <LoginForm />
           </Suspense>
         </div>

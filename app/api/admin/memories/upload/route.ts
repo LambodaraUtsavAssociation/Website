@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
     }
 
     const categoryId = (formData.get('category_id') as string) || '';
-    const captureDate = (formData.get('capture_date') as string) || new Date().toISOString().split('T')[0];
+    const captureDate =
+      (formData.get('capture_date') as string) || new Date().toISOString().split('T')[0];
     const mediaType = (formData.get('media_type') as 'image' | 'video') || 'image';
     const isFeatured = formData.get('is_featured') === 'true';
     const isPublished = formData.get('is_published') !== 'false';
@@ -62,12 +63,15 @@ export async function POST(request: NextRequest) {
     if (mediaType === 'video' && youtubeUrl) {
       const extractedId = extractYouTubeId(youtubeUrl);
       if (!extractedId) {
-        return NextResponse.json({ error: 'Invalid YouTube URL. Please paste a valid YouTube video link.' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Invalid YouTube URL. Please paste a valid YouTube video link.' },
+          { status: 400 }
+        );
       }
 
       youtubeVideoId = extractedId;
-      storagePath = getYouTubeEmbedUrl(extractedId);       // embed URL stored for backward compat
-      thumbnailPath = getYouTubeThumbnail(extractedId);    // auto-generated YouTube thumbnail
+      storagePath = getYouTubeEmbedUrl(extractedId); // embed URL stored for backward compat
+      thumbnailPath = getYouTubeThumbnail(extractedId); // auto-generated YouTube thumbnail
     }
 
     // ── IMAGE UPLOAD BRANCH ─────────────────────────────────────────────────────
@@ -126,7 +130,10 @@ export async function POST(request: NextRequest) {
                 }
               }
             } else if (uploadErr) {
-              console.warn('Supabase storage upload error, using local fallback:', uploadErr.message);
+              console.warn(
+                'Supabase storage upload error, using local fallback:',
+                uploadErr.message
+              );
             }
           } catch (err: any) {
             console.warn('Supabase storage exception, using local fallback:', err?.message || err);
@@ -144,7 +151,11 @@ export async function POST(request: NextRequest) {
 
         if (thumbnailFile && thumbnailFile.size > 0) {
           const thumbBuffer = Buffer.from(await thumbnailFile.arrayBuffer());
-          const localThumbPath = saveFileLocally(thumbBuffer, 'thumbnails', `${timestamp}_thumb.webp`);
+          const localThumbPath = saveFileLocally(
+            thumbBuffer,
+            'thumbnails',
+            `${timestamp}_thumb.webp`
+          );
           if (localThumbPath) thumbnailPath = localThumbPath;
         }
       }
@@ -179,7 +190,10 @@ export async function POST(request: NextRequest) {
 
       if (!storagePath) {
         const localPath = saveFileLocally(buffer, 'videos', `${timestamp}_${sanitizedName}`);
-        if (localPath) { storagePath = localPath; thumbnailPath = localPath; }
+        if (localPath) {
+          storagePath = localPath;
+          thumbnailPath = localPath;
+        }
       }
     }
 

@@ -58,7 +58,7 @@ export function saveBlessingCounts(counts: Record<string, number>): void {
 export function toggleBlessing(memoryId: string, action: 'bless' | 'unbless'): number {
   const counts = getBlessingCounts();
   const current = counts[memoryId] || 0;
-  
+
   if (action === 'bless') {
     counts[memoryId] = current + 1;
   } else {
@@ -68,4 +68,3 @@ export function toggleBlessing(memoryId: string, action: 'bless' | 'unbless'): n
   saveBlessingCounts(counts);
   return counts[memoryId];
 }
-

@@ -35,7 +35,11 @@ export default function AdminHeader({
             style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px' }}
           >
             <picture>
-              <source media="(max-width: 767px)" type="image/svg+xml" srcSet="/images/village_logo_icon.svg" />
+              <source
+                media="(max-width: 767px)"
+                type="image/svg+xml"
+                srcSet="/images/village_logo_icon.svg"
+              />
               <img
                 src="/images/village_logo_icon.png"
                 alt={`${associationName} (${villageName}) Emblem`}
@@ -72,4 +76,3 @@ export default function AdminHeader({
     </header>
   );
 }
-

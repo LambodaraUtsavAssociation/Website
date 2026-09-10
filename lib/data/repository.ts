@@ -10,7 +10,6 @@ function getSupabaseMutationClient() {
   return admin || createClient();
 }
 
-
 let localYears: FestivalYear[] = [...INITIAL_YEARS];
 let localCategories: Category[] = [...INITIAL_CATEGORIES];
 let localMemories: Memory[] = [...INITIAL_MEMORIES];
@@ -117,7 +116,11 @@ export async function getFestivalYearBySlug(slug: string): Promise<FestivalYear 
   if (isSupabaseConfigured()) {
     try {
       const supabase = getSupabaseMutationClient();
-      const { data, error } = await supabase.from('festival_years').select('*').eq('slug', slug).single();
+      const { data, error } = await supabase
+        .from('festival_years')
+        .select('*')
+        .eq('slug', slug)
+        .single();
       if (!error && data) return data as FestivalYear;
     } catch {
       // Fallback
@@ -127,7 +130,9 @@ export async function getFestivalYearBySlug(slug: string): Promise<FestivalYear 
   const year = localYears.find((y) => y.slug === slug || y.year.toString() === slug);
   if (!year) return null;
 
-  const yearMemories = localMemories.filter((m) => m.festival_year_id === year.id && m.is_published);
+  const yearMemories = localMemories.filter(
+    (m) => m.festival_year_id === year.id && m.is_published
+  );
   return {
     ...year,
     memory_count: yearMemories.length,
@@ -140,7 +145,11 @@ export async function getFestivalYearById(id: string): Promise<FestivalYear | nu
   if (isSupabaseConfigured()) {
     try {
       const supabase = getSupabaseMutationClient();
-      const { data, error } = await supabase.from('festival_years').select('*').eq('id', id).single();
+      const { data, error } = await supabase
+        .from('festival_years')
+        .select('*')
+        .eq('id', id)
+        .single();
       if (!error && data) return data as FestivalYear;
     } catch {
       // Fallback
@@ -155,7 +164,10 @@ export async function getCategories(): Promise<Category[]> {
     if (isSupabaseConfigured()) {
       try {
         const supabase = getSupabaseMutationClient();
-        const { data, error } = await supabase.from('categories').select('*').order('display_order', { ascending: true });
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('display_order', { ascending: true });
         if (!error && data && data.length > 0) return data as Category[];
       } catch {
         // Fallback
@@ -175,7 +187,14 @@ export async function getMemories(options?: {
 }): Promise<Memory[]> {
   const cacheKey = `memories:${JSON.stringify(options || {})}`;
   return fetchWithDeduplication(cacheKey, async () => {
-    const { yearId, yearSlug, categorySlug, mediaType, featuredOnly, onlyPublished = true } = options || {};
+    const {
+      yearId,
+      yearSlug,
+      categorySlug,
+      mediaType,
+      featuredOnly,
+      onlyPublished = true,
+    } = options || {};
     const blessingCounts = getBlessingCounts();
 
     const attachBlessingsAndSort = (memList: Memory[]): Memory[] => {
@@ -194,7 +213,10 @@ export async function getMemories(options?: {
     if (isSupabaseConfigured()) {
       try {
         const supabase = getSupabaseMutationClient();
-        let query = supabase.from('memories').select('*, category:categories(*)').order('display_order', { ascending: true });
+        let query = supabase
+          .from('memories')
+          .select('*, category:categories(*)')
+          .order('display_order', { ascending: true });
 
         if (onlyPublished) query = query.eq('is_published', true);
         if (featuredOnly) query = query.eq('is_featured', true);
@@ -223,7 +245,9 @@ export async function getMemories(options?: {
     if (yearId) {
       list = list.filter((m) => m.festival_year_id === yearId);
     } else if (yearSlug) {
-      const targetYear = localYears.find((y) => y.slug === yearSlug || y.year.toString() === yearSlug);
+      const targetYear = localYears.find(
+        (y) => y.slug === yearSlug || y.year.toString() === yearSlug
+      );
       if (targetYear) {
         list = list.filter((m) => m.festival_year_id === targetYear.id);
       }
@@ -269,7 +293,9 @@ export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
   };
 }
 
-export async function createFestivalYear(data: Omit<FestivalYear, 'id' | 'created_at' | 'updated_at'>): Promise<FestivalYear> {
+export async function createFestivalYear(
+  data: Omit<FestivalYear, 'id' | 'created_at' | 'updated_at'>
+): Promise<FestivalYear> {
   const newYear: FestivalYear = {
     ...data,
     id: `fy-${Date.now()}`,
@@ -285,7 +311,11 @@ export async function createFestivalYear(data: Omit<FestivalYear, 'id' | 'create
       if (!cleanPayload.id.includes('-') || cleanPayload.id.startsWith('fy-')) {
         delete cleanPayload.id;
       }
-      const { data: created, error } = await supabase.from('festival_years').insert([cleanPayload]).select().single();
+      const { data: created, error } = await supabase
+        .from('festival_years')
+        .insert([cleanPayload])
+        .select()
+        .single();
       if (error) {
         console.error('Supabase createFestivalYear error:', error);
       } else if (created) {
@@ -302,12 +332,20 @@ export async function createFestivalYear(data: Omit<FestivalYear, 'id' | 'create
   return newYear;
 }
 
-export async function updateFestivalYear(id: string, updates: Partial<FestivalYear>): Promise<FestivalYear | null> {
+export async function updateFestivalYear(
+  id: string,
+  updates: Partial<FestivalYear>
+): Promise<FestivalYear | null> {
   const updated_at = new Date().toISOString();
   if (isSupabaseConfigured()) {
     try {
       const supabase = getSupabaseMutationClient();
-      const { data, error } = await supabase.from('festival_years').update({ ...updates, updated_at }).eq('id', id).select().single();
+      const { data, error } = await supabase
+        .from('festival_years')
+        .update({ ...updates, updated_at })
+        .eq('id', id)
+        .select()
+        .single();
       if (error) {
         console.error('Supabase updateFestivalYear error:', error);
       } else if (data) {
@@ -391,10 +429,14 @@ function isUUID(str?: string | null): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 }
 
-export async function createMemory(formData: MemoryFormData & { customId?: string }): Promise<Memory> {
+export async function createMemory(
+  formData: MemoryFormData & { customId?: string }
+): Promise<Memory> {
   const categoryObj = localCategories.find((c) => c.id === formData.category_id);
   const yearObj = localYears.find((y) => y.id === formData.festival_year_id);
-  const memorableId = formData.customId || generateMemorableMemoryId(formData.festival_year_id, formData.capture_date);
+  const memorableId =
+    formData.customId ||
+    generateMemorableMemoryId(formData.festival_year_id, formData.capture_date);
 
   const fallbackMemory: Memory = {
     id: memorableId,
@@ -433,7 +475,8 @@ export async function createMemory(formData: MemoryFormData & { customId?: strin
       } else {
         const yearsInDb = await getFestivalYears(false);
         const matchYear = yearsInDb.find(
-          (y) => y.id === formData.festival_year_id || y.slug === '2026' || String(y.year) === '2026'
+          (y) =>
+            y.id === formData.festival_year_id || y.slug === '2026' || String(y.year) === '2026'
         );
         if (matchYear && isUUID(matchYear.id)) {
           validYearId = matchYear.id;
@@ -447,7 +490,10 @@ export async function createMemory(formData: MemoryFormData & { customId?: strin
       } else if (formData.category_id) {
         const catsInDb = await getCategories();
         const matchCat = catsInDb.find(
-          (c) => c.id === formData.category_id || c.slug === formData.category_id || c.name === formData.category_id
+          (c) =>
+            c.id === formData.category_id ||
+            c.slug === formData.category_id ||
+            c.name === formData.category_id
         );
         if (matchCat && isUUID(matchCat.id)) {
           validCategoryId = matchCat.id;
@@ -497,7 +543,9 @@ export async function createMemory(formData: MemoryFormData & { customId?: strin
   return fallbackMemory;
 }
 
-export async function getHeroBucketMedia(): Promise<{ url: string; caption: string; alt: string; isVideo?: boolean }[]> {
+export async function getHeroBucketMedia(): Promise<
+  { url: string; caption: string; alt: string; isVideo?: boolean }[]
+> {
   try {
     const response = await fetch('/api/hero-media', { cache: 'no-store' });
     if (response.ok) {
@@ -582,7 +630,9 @@ export async function updateMemory(id: string, updates: Partial<Memory>): Promis
 
   const idx = localMemories.findIndex((m) => m.id === id);
   if (idx === -1) return null;
-  const categoryObj = updates.category_id ? localCategories.find((c) => c.id === updates.category_id) : localMemories[idx].category;
+  const categoryObj = updates.category_id
+    ? localCategories.find((c) => c.id === updates.category_id)
+    : localMemories[idx].category;
   localMemories[idx] = {
     ...localMemories[idx],
     ...updates,
@@ -659,7 +709,10 @@ export async function reorderMemories(orderedIds: string[]): Promise<boolean> {
     try {
       const supabase = getSupabaseMutationClient();
       const updates = orderedIds.map((id, index) =>
-        supabase.from('memories').update({ display_order: index + 1 }).eq('id', id)
+        supabase
+          .from('memories')
+          .update({ display_order: index + 1 })
+          .eq('id', id)
       );
       await Promise.all(updates);
       invalidateRepositoryCache('memories');
@@ -678,4 +731,3 @@ export async function reorderMemories(orderedIds: string[]): Promise<boolean> {
   invalidateRepositoryCache('memories');
   return true;
 }
-

@@ -30,20 +30,24 @@ export default function GalleryCard({
   const aspectClass = getMasonryAspectClass(index, memory);
 
   // For YouTube videos, use the YouTube thumbnail (thumbnailUrl / poster) as the card image
-  const cardImageUrl = isVideo && mediaInfo.isYouTube
-    ? (mediaInfo.thumbnailUrl || mediaInfo.poster || mediaInfo.url)
-    : mediaInfo.url;
-
+  const cardImageUrl =
+    isVideo && mediaInfo.isYouTube
+      ? mediaInfo.thumbnailUrl || mediaInfo.poster || mediaInfo.url
+      : mediaInfo.url;
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const shareUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}${window.location.pathname}?memory=${memory.id}`
-      : '';
+    const shareUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}${window.location.pathname}?memory=${memory.id}`
+        : '';
 
     const shareData = {
       title: memory.title || 'Lambodara Utsav Memory',
-      text: memory.description || memory.title || 'Check out this memory from Lambodara Utsav (Papi Reddy Palli)!',
+      text:
+        memory.description ||
+        memory.title ||
+        'Check out this memory from Lambodara Utsav (Papi Reddy Palli)!',
       url: shareUrl,
     };
 
@@ -165,9 +169,13 @@ export default function GalleryCard({
 
           {/* Hero Highlight / Featured Badge */}
           {memory.is_featured && (
-            <div className={`absolute z-20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-gold-500/95 text-charcoal-950 text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold shadow-lg shadow-gold-500/20 flex items-center space-x-1 ${
-              isVideo ? 'bottom-3 right-3 sm:bottom-auto sm:top-10 sm:right-3' : 'top-2 sm:top-3 right-2 sm:right-3'
-            }`}>
+            <div
+              className={`absolute z-20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-gold-500/95 text-charcoal-950 text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold shadow-lg shadow-gold-500/20 flex items-center space-x-1 ${
+                isVideo
+                  ? 'bottom-3 right-3 sm:bottom-auto sm:top-10 sm:right-3'
+                  : 'top-2 sm:top-3 right-2 sm:right-3'
+              }`}
+            >
               <span>★</span>
               <span>HERO</span>
             </div>

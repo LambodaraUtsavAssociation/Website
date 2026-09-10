@@ -108,6 +108,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, fileName: targetFileName });
   } catch (err: any) {
     console.error('Hero delete error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to delete hero media' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Failed to delete hero media' },
+      { status: 500 }
+    );
   }
 }

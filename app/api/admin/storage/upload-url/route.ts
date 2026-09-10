@@ -32,7 +32,10 @@ export async function POST(request: NextRequest) {
 
     if (error || !data?.signedUrl) {
       console.error('Failed to create signed upload URL:', error);
-      return NextResponse.json({ error: error?.message || 'Failed to create signed upload URL' }, { status: 500 });
+      return NextResponse.json(
+        { error: error?.message || 'Failed to create signed upload URL' },
+        { status: 500 }
+      );
     }
 
     const { data: publicUrlData } = adminSupabase.storage.from(bucket).getPublicUrl(filePath);
@@ -45,6 +48,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: any) {
     console.error('Signed upload URL exception:', err);
-    return NextResponse.json({ error: err.message || 'Failed to generate signed upload URL' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Failed to generate signed upload URL' },
+      { status: 500 }
+    );
   }
 }

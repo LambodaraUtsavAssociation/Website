@@ -15,11 +15,56 @@ export default function DevotionalFlowerShower() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
 
-  // Ultra-responsive Audio Toggle (Safely handles rapid play/pause spam)
-  const toggleAudio = () => {
+  // Safely stop audio with zero race conditions (even if in-flight or rapid-clicked)
+  const stopAudio = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    isPlayingAudioRef.current = false;
+    setIsPlayingAudio(false);
+
+    if (playPromiseRef.current) {
+      playPromiseRef.current
+        .then(() => {
+          if (!isPlayingAudioRef.current) {
+            audio.pause();
+          }
+        })
+        .catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, []);
+
+  // Safely play audio with zero race conditions
+  const playAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    isPlayingAudioRef.current = true;
+    setIsPlayingAudio(true);
+
+    const promise = audio.play();
+    playPromiseRef.current = promise;
+    promise
+      .then(() => {
+        playPromiseRef.current = null;
+        // If user rapidly clicked pause before play promise resolved, pause now
+        if (!isPlayingAudioRef.current) {
+          audio.pause();
+        }
+      })
+      .catch((err) => {
+        playPromiseRef.current = null;
+        if (err.name !== 'AbortError') {
+          isPlayingAudioRef.current = false;
+          setIsPlayingAudio(false);
+        }
+      });
+  }, []);
+
+  // Ultra-responsive Audio Toggle (Safely handles rapid play/pause spam)
+  const toggleAudio = () => {
     // Devotional haptic touch feedback
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       try {
@@ -30,45 +75,40 @@ export default function DevotionalFlowerShower() {
     }
 
     if (isPlayingAudioRef.current) {
-      // User wants to stop immediately
-      isPlayingAudioRef.current = false;
-      setIsPlayingAudio(false);
-
-      if (playPromiseRef.current) {
-        playPromiseRef.current
-          .then(() => {
-            if (!isPlayingAudioRef.current) {
-              audio.pause();
-            }
-          })
-          .catch(() => { });
-      } else {
-        audio.pause();
-      }
+      stopAudio();
     } else {
-      // User wants to play immediately
-      isPlayingAudioRef.current = true;
-      setIsPlayingAudio(true);
-
-      const promise = audio.play();
-      playPromiseRef.current = promise;
-      promise
-        .then(() => {
-          playPromiseRef.current = null;
-          // If rapid click occurred before play resolved, pause now
-          if (!isPlayingAudioRef.current) {
-            audio.pause();
-          }
-        })
-        .catch((err) => {
-          playPromiseRef.current = null;
-          if (err.name !== 'AbortError') {
-            isPlayingAudioRef.current = false;
-            setIsPlayingAudio(false);
-          }
-        });
+      playAudio();
     }
   };
+
+  // Automatically stop Aarti whenever ANY video starts playing on the website
+  // Stays stopped until the user manually clicks the Aarti button again
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // 1. Capture-phase DOM listener catches any native HTML5 <video> starting playback
+    const handleGlobalMediaPlay = (event: Event) => {
+      const target = event.target as HTMLMediaElement;
+      // Ignore our own jaidev audio element and muted background videos (like flower shower)
+      if (target === audioRef.current || target?.muted) return;
+
+      stopAudio();
+    };
+
+    window.addEventListener('play', handleGlobalMediaPlay, true);
+
+    // 2. Custom event listener for embedded players (YouTube iframe in lightbox, etc.)
+    const handleCustomVideoPlay = () => {
+      stopAudio();
+    };
+
+    window.addEventListener('festival-video-play', handleCustomVideoPlay);
+
+    return () => {
+      window.removeEventListener('play', handleGlobalMediaPlay, true);
+      window.removeEventListener('festival-video-play', handleCustomVideoPlay);
+    };
+  }, [stopAudio]);
 
   // Dynamically calculate the number of side-by-side columns based on screen width
   // Ensures every screen size (from 360px mobile to 4K ultrawide) is completely covered
@@ -139,8 +179,9 @@ export default function DevotionalFlowerShower() {
       {/* Full-Screen Side-by-Side Falling Flower Shower Overlay */}
       <div
         aria-hidden="true"
-        className={`fixed inset-0 pointer-events-none z-50 flex flex-row items-stretch justify-center overflow-hidden transition-opacity duration-500 ${isShowering ? 'opacity-100 visible' : 'opacity-0 invisible'
-          }`}
+        className={`fixed inset-0 pointer-events-none z-50 flex flex-row items-stretch justify-center overflow-hidden transition-opacity duration-500 ${
+          isShowering ? 'opacity-100 visible' : 'opacity-0 invisible'
+        }`}
       >
         {Array.from({ length: columnCount }).map((_, index) => (
           <div
@@ -187,11 +228,14 @@ export default function DevotionalFlowerShower() {
           <button
             onClick={toggleAudio}
             type="button"
-            aria-label={isPlayingAudio ? 'జై దేవ్ జై దేవ్ • Stop Aarti' : 'జై దేవ్ జై దేవ్ • Play Aarti'}
-            className={`relative flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full transition-all duration-300 shadow-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold-400 active:scale-90 hover:scale-105 ${isPlayingAudio
-              ? 'bg-gradient-to-tr from-red-600 via-saffron-500 to-gold-400 text-charcoal-950 border border-gold-200 shadow-gold-500/50'
-              : 'bg-charcoal-900/90 hover:bg-charcoal-800 text-gold-400 border border-gold-500/50 hover:border-gold-400 shadow-black/60'
-              }`}
+            aria-label={
+              isPlayingAudio ? 'జై దేవ్ జై దేవ్ • Stop Aarti' : 'జై దేవ్ జై దేవ్ • Play Aarti'
+            }
+            className={`relative flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full transition-all duration-300 shadow-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold-400 active:scale-90 hover:scale-105 ${
+              isPlayingAudio
+                ? 'bg-gradient-to-tr from-red-600 via-saffron-500 to-gold-400 text-charcoal-950 border border-gold-200 shadow-gold-500/50'
+                : 'bg-charcoal-900/90 hover:bg-charcoal-800 text-gold-400 border border-gold-500/50 hover:border-gold-400 shadow-black/60'
+            }`}
           >
             {isPlayingAudio ? (
               <div className="flex items-center space-x-0.5">

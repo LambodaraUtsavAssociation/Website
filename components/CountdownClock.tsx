@@ -1,10 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  getFestivalDates,
-  getCurrentFestivalDay,
-} from '@/lib/festivalDates';
+import { getFestivalDates, getCurrentFestivalDay } from '@/lib/festivalDates';
 
 interface CountdownClockProps {
   targetYear?: number;
@@ -16,12 +13,28 @@ const calculateInitialTime = (targetYear: number) => {
   const now = new Date();
 
   if (now > endDate) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, isStarted: true, isEnded: true, festivalDay: 5 };
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      isStarted: true,
+      isEnded: true,
+      festivalDay: 5,
+    };
   }
 
   if (now >= startDate) {
     const currentDay = getCurrentFestivalDay(targetYear, now);
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, isStarted: true, isEnded: false, festivalDay: currentDay };
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      isStarted: true,
+      isEnded: false,
+      festivalDay: currentDay,
+    };
   }
 
   const difference = startDate.getTime() - now.getTime();
@@ -33,7 +46,10 @@ const calculateInitialTime = (targetYear: number) => {
   return { days, hours, minutes, seconds, isStarted: false, isEnded: false, festivalDay: 0 };
 };
 
-export default function CountdownClock({ targetYear = new Date().getFullYear(), className = '' }: CountdownClockProps) {
+export default function CountdownClock({
+  targetYear = new Date().getFullYear(),
+  className = '',
+}: CountdownClockProps) {
   const [timeLeft, setTimeLeft] = useState(() => calculateInitialTime(targetYear));
 
   useEffect(() => {
@@ -49,7 +65,9 @@ export default function CountdownClock({ targetYear = new Date().getFullYear(), 
   // Stage 1: Festival has completed for target year
   if (timeLeft.isEnded) {
     return (
-      <div className={`w-full sm:w-auto px-5 py-2.5 rounded-full bg-charcoal-900/90 border border-gold-500/30 text-gold-300 text-[10px] sm:text-xs font-semibold uppercase tracking-widest shadow-xl text-center ${className}`}>
+      <div
+        className={`w-full sm:w-auto px-5 py-2.5 rounded-full bg-charcoal-900/90 border border-gold-500/30 text-gold-300 text-[10px] sm:text-xs font-semibold uppercase tracking-widest shadow-xl text-center ${className}`}
+      >
         &bull; Vinayaka Chavithi {targetYear} Celebration Completed & Archived &bull;
       </div>
     );
@@ -58,7 +76,9 @@ export default function CountdownClock({ targetYear = new Date().getFullYear(), 
   // Stage 2: Festival is currently underway (5-Day Celebration)
   if (timeLeft.isStarted) {
     return (
-      <div className={`w-full sm:w-auto px-5 py-2.5 rounded-full bg-saffron-600/20 border border-saffron-500/40 text-saffron-300 text-[10px] sm:text-xs font-semibold uppercase tracking-widest animate-pulse shadow-glow-saffron text-center ${className}`}>
+      <div
+        className={`w-full sm:w-auto px-5 py-2.5 rounded-full bg-saffron-600/20 border border-saffron-500/40 text-saffron-300 text-[10px] sm:text-xs font-semibold uppercase tracking-widest animate-pulse shadow-glow-saffron text-center ${className}`}
+      >
         &bull; Festival Celebrations Are Currently Underway (Day {timeLeft.festivalDay} of 5) &bull;
       </div>
     );
@@ -71,31 +91,57 @@ export default function CountdownClock({ targetYear = new Date().getFullYear(), 
       suppressHydrationWarning
     >
       <div className="text-center flex-1 sm:flex-initial min-w-0 sm:min-w-[56px]">
-        <span className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
+        <span
+          className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none"
+          suppressHydrationWarning
+        >
           {String(timeLeft.days).padStart(2, '0')}
         </span>
-        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">Days</span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">
+          Days
+        </span>
       </div>
-      <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light px-0.5 sm:px-0">:</span>
+      <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light px-0.5 sm:px-0">
+        :
+      </span>
       <div className="text-center flex-1 sm:flex-initial min-w-0 sm:min-w-[56px]">
-        <span className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
+        <span
+          className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none"
+          suppressHydrationWarning
+        >
           {String(timeLeft.hours).padStart(2, '0')}
         </span>
-        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">Hours</span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">
+          Hours
+        </span>
       </div>
-      <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light px-0.5 sm:px-0">:</span>
+      <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light px-0.5 sm:px-0">
+        :
+      </span>
       <div className="text-center flex-1 sm:flex-initial min-w-0 sm:min-w-[56px]">
-        <span className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
+        <span
+          className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none"
+          suppressHydrationWarning
+        >
           {String(timeLeft.minutes).padStart(2, '0')}
         </span>
-        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">Mins</span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">
+          Mins
+        </span>
       </div>
-      <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light px-0.5 sm:px-0">:</span>
+      <span className="text-gold-500/50 font-editorial text-lg sm:text-xl font-light px-0.5 sm:px-0">
+        :
+      </span>
       <div className="text-center flex-1 sm:flex-initial min-w-0 sm:min-w-[56px]">
-        <span className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none" suppressHydrationWarning>
+        <span
+          className="block font-editorial text-2xl sm:text-4xl text-gold-400 font-bold leading-none"
+          suppressHydrationWarning
+        >
           {String(timeLeft.seconds).padStart(2, '0')}
         </span>
-        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">Secs</span>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-ivory-400 font-sans font-medium">
+          Secs
+        </span>
       </div>
     </div>
   );

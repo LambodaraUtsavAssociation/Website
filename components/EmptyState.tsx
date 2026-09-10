@@ -42,9 +42,7 @@ export default function EmptyState({
             {icon || <ImageOff className="w-8 h-8 text-orange-500" />}
           </div>
 
-          <h3 className="text-xl sm:text-2xl text-slate-900 font-bold mb-2">
-            {title}
-          </h3>
+          <h3 className="text-xl sm:text-2xl text-slate-900 font-bold mb-2">{title}</h3>
 
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-md mx-auto mb-6 font-sans">
             {description}

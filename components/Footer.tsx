@@ -57,7 +57,11 @@ export default function Footer({
               style={{ width: '52px', height: '52px', minWidth: '52px', minHeight: '52px' }}
             >
               <picture>
-                <source media="(max-width: 767px)" type="image/svg+xml" srcSet="/images/village_logo_icon.svg" />
+                <source
+                  media="(max-width: 767px)"
+                  type="image/svg+xml"
+                  srcSet="/images/village_logo_icon.svg"
+                />
                 <img
                   src="/images/village_logo_icon.png"
                   alt={`${associationName} (${villageName}) Emblem`}
@@ -82,14 +86,17 @@ export default function Footer({
           </p>
 
           <p className="text-xs text-ivory-400 leading-relaxed max-w-md">
-            Established by {associationName} to preserve every sacred ritual, community gathering, and festive reflection of {villageName} for present and future generations.
+            Established by {associationName} to preserve every sacred ritual, community gathering,
+            and festive reflection of {villageName} for present and future generations.
           </p>
         </div>
 
         {/* Quick Links */}
         <div className="md:col-span-6 flex flex-col md:items-end space-y-3">
           <div className="flex flex-col space-y-3 max-w-xs w-full">
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-gold-400">Navigation</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-gold-400">
+              Navigation
+            </h4>
             <ul className="space-y-2 text-xs uppercase tracking-wider font-medium">
               <li>
                 <Link href="/" className="hover:text-ivory-50 transition-colors">
@@ -118,7 +125,9 @@ export default function Footer({
 
       {/* Bottom Bar */}
       <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-charcoal-850 flex flex-col sm:flex-row items-center justify-between text-xs text-ivory-400 space-y-4 sm:space-y-0">
-        <p>&copy; {new Date().getFullYear()} {villageName} Vinayaka Chavithi Digital Gallery.</p>
+        <p>
+          &copy; {new Date().getFullYear()} {villageName} Vinayaka Chavithi Digital Gallery.
+        </p>
         <p>Preserved with devotion for our village community</p>
       </div>
     </footer>

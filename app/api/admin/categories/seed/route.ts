@@ -7,7 +7,8 @@ const OFFICIAL_CATEGORIES = [
   {
     name: 'Aagaman',
     slug: 'aagaman',
-    description: 'Grand arrival and welcoming processional of Lord Vinayaka into Papi Reddy Palli mandap.',
+    description:
+      'Grand arrival and welcoming processional of Lord Vinayaka into Papi Reddy Palli mandap.',
     display_order: 1,
   },
   {
@@ -19,25 +20,29 @@ const OFFICIAL_CATEGORIES = [
   {
     name: 'Pooja & Aarthi',
     slug: 'pooja-aarthi',
-    description: 'Daily morning and evening Vedic rituals, brass lamp Aarti, and devotional stotram chanting.',
+    description:
+      'Daily morning and evening Vedic rituals, brass lamp Aarti, and devotional stotram chanting.',
     display_order: 3,
   },
   {
     name: 'Decoration',
     slug: 'decoration',
-    description: 'Traditional flower garlands, coconut leaf pandal arches, and divine mandap lighting decorations.',
+    description:
+      'Traditional flower garlands, coconut leaf pandal arches, and divine mandap lighting decorations.',
     display_order: 4,
   },
   {
     name: 'Culturals',
     slug: 'culturals',
-    description: 'Devotional music, traditional folk dances, drama performances, and cultural stage programs.',
+    description:
+      'Devotional music, traditional folk dances, drama performances, and cultural stage programs.',
     display_order: 5,
   },
   {
     name: 'Games & Competitions',
     slug: 'games-competitions',
-    description: "Village community sports, children's drawing competitions, and festive sports events.",
+    description:
+      "Village community sports, children's drawing competitions, and festive sports events.",
     display_order: 6,
   },
   {
@@ -49,13 +54,15 @@ const OFFICIAL_CATEGORIES = [
   {
     name: 'Random Clicks',
     slug: 'random-clicks',
-    description: 'Candid village moments, volunteer portraits, behind-the-scenes preparation, and festive smiles.',
+    description:
+      'Candid village moments, volunteer portraits, behind-the-scenes preparation, and festive smiles.',
     display_order: 8,
   },
   {
     name: 'Visarjan',
     slug: 'visarjan',
-    description: 'Immersion procession, grand Nimajjanam rallies, gulal celebrations, and farewell rituals.',
+    description:
+      'Immersion procession, grand Nimajjanam rallies, gulal celebrations, and farewell rituals.',
     display_order: 9,
   },
 ];
@@ -78,7 +85,10 @@ export async function POST() {
   // 2. Remove any old categories not in the official list
   if (existing && existing.length > 0) {
     for (const oldCat of existing) {
-      if (!officialSlugs.includes(oldCat.slug) && !OFFICIAL_CATEGORIES.some((c) => c.name === oldCat.name)) {
+      if (
+        !officialSlugs.includes(oldCat.slug) &&
+        !OFFICIAL_CATEGORIES.some((c) => c.name === oldCat.name)
+      ) {
         await adminSupabase.from('categories').delete().eq('id', oldCat.id);
       }
     }
@@ -86,7 +96,9 @@ export async function POST() {
 
   // 3. Insert or update official 9 categories
   for (const cat of OFFICIAL_CATEGORIES) {
-    const match = existing?.find((e: any) => e.slug === cat.slug || e.name.toLowerCase() === cat.name.toLowerCase());
+    const match = existing?.find(
+      (e: any) => e.slug === cat.slug || e.name.toLowerCase() === cat.name.toLowerCase()
+    );
 
     const dbPayload = {
       name: cat.name,
@@ -108,10 +120,7 @@ export async function POST() {
       opError = error;
       opData = data;
     } else {
-      const { data, error } = await adminSupabase
-        .from('categories')
-        .insert([dbPayload])
-        .select();
+      const { data, error } = await adminSupabase.from('categories').insert([dbPayload]).select();
       opError = error;
       opData = data;
     }
@@ -125,7 +134,10 @@ export async function POST() {
   }
 
   // 4. Fetch final updated list from database
-  const { data: updatedList } = await adminSupabase.from('categories').select('*').order('display_order', { ascending: true });
+  const { data: updatedList } = await adminSupabase
+    .from('categories')
+    .select('*')
+    .order('display_order', { ascending: true });
 
   return NextResponse.json({
     success: true,

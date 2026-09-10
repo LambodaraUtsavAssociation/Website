@@ -30,7 +30,10 @@ export default function ServiceWorkerRegister() {
               const installingWorker = registration.installing;
               if (installingWorker) {
                 installingWorker.onstatechange = () => {
-                  if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  if (
+                    installingWorker.state === 'installed' &&
+                    navigator.serviceWorker.controller
+                  ) {
                     console.info('Lambodara Utsav: New version installed in background.');
                   }
                 };

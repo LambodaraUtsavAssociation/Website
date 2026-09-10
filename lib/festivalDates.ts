@@ -71,7 +71,10 @@ export function getDaysUntilFestival(year: number, currentDate = new Date()): nu
 /**
  * Determines the active FestivalYear to display.
  */
-export function getDisplayFestivalYear(years: FestivalYear[], currentDate = new Date()): FestivalYear | null {
+export function getDisplayFestivalYear(
+  years: FestivalYear[],
+  currentDate = new Date()
+): FestivalYear | null {
   const publishedYears = years.filter((y) => y.is_published).sort((a, b) => b.year - a.year);
   if (publishedYears.length === 0) return null;
 
