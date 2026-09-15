@@ -21,7 +21,7 @@ export function logAuditEvent({
   action,
   targetEntity,
   entityId,
-  userId = 'admin@LambodaraUtsavAssociation.org',
+  userId = 'admin',
   request,
   details,
 }: {

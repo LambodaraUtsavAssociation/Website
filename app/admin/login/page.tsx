@@ -80,7 +80,7 @@ function LoginForm() {
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="vinayakachavithiprp@gmail.com"
+            placeholder="admin@example.com"
             className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/80 border border-slate-300/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10 transition-all font-sans"
           />
         </div>

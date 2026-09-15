@@ -24,7 +24,7 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({
-  adminEmail = 'admin@VinayakaChavithi.village',
+  adminEmail = 'Administrator',
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();

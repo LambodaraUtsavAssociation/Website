@@ -46,23 +46,26 @@ export async function validateSupabaseAuth(
   pass: string
 ): Promise<{ success: boolean; error?: string }> {
   const cleanEmail = email.trim().toLowerCase();
-  const targetAdminEmail = (
+  const rawAdminEmails = (
     process.env.ADMIN_EMAIL ||
     process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
     ''
-  )
-    .trim()
-    .toLowerCase();
+  ).trim();
 
-  if (!targetAdminEmail) {
+  if (!rawAdminEmails) {
     return {
       success: false,
-      error: 'Server configuration error: ADMIN_EMAIL is not configured.',
+      error: 'Server configuration error: ADMIN_EMAIL is not configured in server environment variables.',
     };
   }
 
+  const authorizedEmails = rawAdminEmails
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
   // Enforce authorized administrator email
-  if (cleanEmail !== targetAdminEmail) {
+  if (!authorizedEmails.includes(cleanEmail)) {
     return {
       success: false,
       error: 'Access Denied: Only authorized administrator is permitted.',
@@ -82,7 +85,7 @@ export async function validateSupabaseAuth(
       });
 
       if (!error && data?.user) {
-        if (data.user.email?.toLowerCase() === targetAdminEmail) {
+        if (authorizedEmails.includes(data.user.email?.toLowerCase() || '')) {
           return { success: true };
         } else {
           return { success: false, error: 'Unauthorized user email.' };
