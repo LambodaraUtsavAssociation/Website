@@ -19,10 +19,18 @@ export async function middleware(request: NextRequest) {
     hostname === '127.0.0.1' ||
     hostname.endsWith('.vercel.app');
 
+  // A host is ONLY a dedicated admin host if it is an admin subdomain (e.g. admin.lambodarautsav.org)
+  // or explicitly marked as IS_ADMIN_DOMAIN. The primary website (lambodarautsav.vercel.app / lambodarautsav.org)
+  // is NEVER an admin host.
   const isAdminHost =
-    (adminDomain && hostname === adminDomain) ||
     hostname.startsWith('admin.') ||
+    (adminDomain && adminDomain.startsWith('admin.') && hostname === adminDomain) ||
     process.env.NEXT_PUBLIC_IS_ADMIN_DOMAIN === 'true';
+
+  // Public homepage '/' must ALWAYS load the main website for general visitors
+  if (!isAdminHost && pathname === '/') {
+    return NextResponse.next();
+  }
 
   const adminCookie = request.cookies.get('Vinayaka_admin_session')?.value;
 
@@ -42,7 +50,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Subdomain Routing: If accessing via Admin Subdomain/Domain
+  // 2. Subdomain Routing: If accessing via Dedicated Admin Subdomain (e.g. admin.lambodarautsav.org)
   if (isAdminHost) {
     // Root '/' on admin domain goes straight to admin dashboard or login
     if (pathname === '/') {
@@ -52,11 +60,12 @@ export async function middleware(request: NextRequest) {
     }
   } else if (
     adminDomain &&
+    adminDomain.startsWith('admin.') &&
     !isLocalOrVercel &&
     hostname !== adminDomain &&
     pathname.startsWith('/admin')
   ) {
-    // Domain Separation: Only redirect custom production domains if ADMIN_DOMAIN is set and different
+    // Domain Separation: Only redirect custom production domains if a dedicated admin subdomain is set and different
     const protocol = request.nextUrl.protocol || 'https:';
     const targetUrl = new URL(pathname, `${protocol}//${adminDomain}`);
     return NextResponse.redirect(targetUrl);
