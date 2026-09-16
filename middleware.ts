@@ -4,12 +4,24 @@ import { verifySessionToken } from '@/lib/sessionCrypto';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hostname = request.headers.get('host') || request.nextUrl.host || '';
+  const rawHostname = request.headers.get('host') || request.nextUrl.host || '';
+  const hostname = rawHostname.split(':')[0].toLowerCase();
 
-  const adminDomain = process.env.ADMIN_DOMAIN || process.env.NEXT_PUBLIC_ADMIN_DOMAIN;
+  const rawAdminDomain = (process.env.ADMIN_DOMAIN || process.env.NEXT_PUBLIC_ADMIN_DOMAIN || '').trim();
+  const adminDomain = rawAdminDomain
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/.*$/, '')
+    .split(':')[0]
+    .toLowerCase();
+
+  const isLocalOrVercel =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.endsWith('.vercel.app');
+
   const isAdminHost =
+    (adminDomain && hostname === adminDomain) ||
     hostname.startsWith('admin.') ||
-    (adminDomain && hostname.includes(adminDomain)) ||
     process.env.NEXT_PUBLIC_IS_ADMIN_DOMAIN === 'true';
 
   const adminCookie = request.cookies.get('Vinayaka_admin_session')?.value;
@@ -38,8 +50,13 @@ export async function middleware(request: NextRequest) {
         new URL(isAuthenticated ? '/admin' : '/admin/login', request.url)
       );
     }
-  } else if (adminDomain && pathname.startsWith('/admin')) {
-    // Domain Separation: If trying to access /admin on Public Website Domain while ADMIN_DOMAIN is set
+  } else if (
+    adminDomain &&
+    !isLocalOrVercel &&
+    hostname !== adminDomain &&
+    pathname.startsWith('/admin')
+  ) {
+    // Domain Separation: Only redirect custom production domains if ADMIN_DOMAIN is set and different
     const protocol = request.nextUrl.protocol || 'https:';
     const targetUrl = new URL(pathname, `${protocol}//${adminDomain}`);
     return NextResponse.redirect(targetUrl);
