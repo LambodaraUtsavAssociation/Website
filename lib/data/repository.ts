@@ -204,9 +204,13 @@ export async function getMemories(options?: {
       }));
 
       return listWithBlessings.sort((a, b) => {
-        const bCountDiff = (b.blessing_count || 0) - (a.blessing_count || 0);
-        if (bCountDiff !== 0) return bCountDiff; // Highest blessed first!
-        return a.display_order - b.display_order;
+        // Newest uploaded media (video or image) comes first!
+        const timeA = new Date(a.created_at || a.capture_date || 0).getTime();
+        const timeB = new Date(b.created_at || b.capture_date || 0).getTime();
+        if (!isNaN(timeA) && !isNaN(timeB) && timeB !== timeA) {
+          return timeB - timeA;
+        }
+        return (a.display_order || 0) - (b.display_order || 0);
       });
     };
 
@@ -216,7 +220,7 @@ export async function getMemories(options?: {
         let query = supabase
           .from('memories')
           .select('*, category:categories(*)')
-          .order('display_order', { ascending: true });
+          .order('created_at', { ascending: false });
 
         if (onlyPublished) query = query.eq('is_published', true);
         if (featuredOnly) query = query.eq('is_featured', true);
@@ -478,7 +482,7 @@ export async function createMemory(
     height: 1067,
     is_featured: formData.is_featured,
     is_published: formData.is_published,
-    display_order: formData.display_order ?? localMemories.length + 1,
+    display_order: formData.display_order ?? 1,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     category: categoryObj || null,
@@ -539,7 +543,7 @@ export async function createMemory(
         height: 1067,
         is_featured: formData.is_featured,
         is_published: formData.is_published,
-        display_order: formData.display_order ?? localMemories.length + 1,
+        display_order: formData.display_order ?? 1,
       };
 
       const { data, error } = await supabase
@@ -559,7 +563,7 @@ export async function createMemory(
     }
   }
 
-  localMemories.push(fallbackMemory);
+  localMemories.unshift(fallbackMemory);
   invalidateRepositoryCache('memories');
   return fallbackMemory;
 }
